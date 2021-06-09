@@ -4,6 +4,7 @@
 
 #include "alloc/alloc.h"
 #include "alloc/arena/intern.h"
+#include "lang/lexer/lexer_helper.h"
 #include "struct/alist.h"
 #include "util/file/file_info.h"
 #include "util/string.h"
@@ -13,12 +14,13 @@
 typedef struct {
   char *token;
   char *token_name;
+  int token_len;
 } _TokenDef;
 
 typedef struct {
   _TokenDef open;
   _TokenDef close;
-} _CommentDef;
+} _OpenCloseDef;
 
 typedef struct __Trie _Trie;
 
@@ -33,6 +35,7 @@ struct _LexerBuilder {
   _Trie *symbols_trie;
   _Trie *keywords_trie;
   AList comments;
+  AList strings;
 };
 
 _Trie *_trie_create() {
@@ -81,6 +84,13 @@ _Trie *_create_trie_from_symbols(AList *symbols) {
   return base;
 }
 
+char *_escape_interned(const char *str) {
+  char *tmp = escape(str);
+  char *interned = intern(tmp);
+  DEALLOC(tmp);
+  return interned;
+}
+
 void _build_token_list(FileInfo *file, AList *tokens) {
   LineInfo *li;
   alist_init(tokens, _TokenDef, DEFAULT_ARRAY_SZ);
@@ -89,10 +99,12 @@ void _build_token_list(FileInfo *file, AList *tokens) {
         find_str(li->line_text, strlen(li->line_text), ",", strlen(","));
     uint32_t comma_index = comma - li->line_text;
     _TokenDef *def = alist_add(tokens);
-    def->token =
+    char *token_unescaped =
         intern_range(comma, 1,
                      ends_with(comma + 1, "\n") ? (strlen(comma + 1) - 1)
                                                 : strlen(comma + 1));
+    def->token = _escape_interned(token_unescaped);
+    def->token_len = strlen(token_unescaped);
     def->token_name = intern_range(li->line_text, 0, comma_index);
   }
 }
@@ -107,19 +119,24 @@ char *_string_copy_and_append(const char main[], size_t main_len,
   return final;
 }
 
-void _build_comment_list(FileInfo *file, AList *tokens) {
+void _build_open_close_list(FileInfo *file, AList *tokens) {
   LineInfo *li;
-  alist_init(tokens, _CommentDef, DEFAULT_ARRAY_SZ);
+  alist_init(tokens, _OpenCloseDef, DEFAULT_ARRAY_SZ);
   while (NULL != (li = file_info_getline(file))) {
     char *comma1 =
         find_str(li->line_text, strlen(li->line_text), ",", strlen(","));
     char *comma2 = find_str(comma1 + 1, strlen(comma1 + 1), ",", strlen(","));
-    _CommentDef *def = alist_add(tokens);
-    def->open.token = intern_range(comma1, 1, comma2 - comma1);
-    def->close.token =
+    _OpenCloseDef *def = alist_add(tokens);
+    char *token_unesc = intern_range(comma1, 1, comma2 - comma1);
+    def->open.token = _escape_interned(token_unesc);
+    def->open.token_len = strlen(token_unesc);
+
+    token_unesc =
         intern_range(comma2, 1,
                      ends_with(comma2 + 1, "\n") ? (strlen(comma2 + 1) - 1)
                                                  : strlen(comma2 + 1));
+    def->close.token = _escape_interned(token_unesc);
+    def->close.token_len = strlen(token_unesc);
     def->open.token_name =
         _string_copy_and_append(li->line_text, comma1 - li->line_text, "_OPEN");
     def->close.token_name = _string_copy_and_append(
@@ -128,20 +145,23 @@ void _build_comment_list(FileInfo *file, AList *tokens) {
 }
 
 LexerBuilder *lexer_builder_create(FileInfo *symbols, FileInfo *keywords,
-                                   FileInfo *comments) {
+                                   FileInfo *comments, FileInfo *strings) {
   LexerBuilder *lb = ALLOC2(LexerBuilder);
   _build_token_list(symbols, &lb->symbols);
   _build_token_list(keywords, &lb->keywords);
-  _build_comment_list(comments, &lb->comments);
+  _build_open_close_list(comments, &lb->comments);
+  _build_open_close_list(strings, &lb->strings);
   lb->symbols_trie = _create_trie_from_symbols(&lb->symbols);
   lb->keywords_trie = _create_trie_from_symbols(&lb->keywords);
   return lb;
 }
 
-void _write_header(LexerBuilder *lb, FILE *file) {
+void _write_header(LexerBuilder *lb, FILE *file, const char h_file_path[]) {
   // Includes.
-  fprintf(file, "#include <stdbool.h>\n\n");
+  fprintf(file, "#include \"%s\"\n\n", h_file_path);
   fprintf(file, "#include \"lang/lexer/lexer_helper.h\"\n");
+  fprintf(file, "#include \"lang/lexer/token.h\"\n");
+  fprintf(file, "#include \"util/string.h\"\n");
   fprintf(file, "\n");
 }
 
@@ -149,9 +169,9 @@ void _write_token_type_enum(LexerBuilder *lb, FILE *file) {
   fprintf(file, "typedef enum {\n"
                 "  TOKENTYPE_UNKNOWN,\n"
                 "  TOKEN_WORD,\n"
-                "  TOKEN_STRING\n"
-                "  TOKEN_INTEGER\n"
-                "  TOKEN_FLOATING\n");
+                "  TOKEN_STRING,\n"
+                "  TOKEN_INTEGER,\n"
+                "  TOKEN_FLOATING,\n");
   AL_iter iter = alist_iter(&lb->symbols);
   for (; al_has(&iter); al_inc(&iter)) {
     _TokenDef *token_def = (_TokenDef *)al_value(&iter);
@@ -182,7 +202,7 @@ void _write_token_type_to_str(LexerBuilder *lb, FILE *file) {
             token_def->token);
   }
   fprintf(file, "    case ENDLINE: return \"\\n\";\n");
-  fprintf(file, "    default: \"UNKNOWN\";\n  }\n}\n\n");
+  fprintf(file, "    default: return \"UNKNOWN\";\n  }\n}\n\n");
 }
 
 void _write_switch_for_symbol_resolve(_Trie *trie, int index, FILE *file) {
@@ -195,7 +215,11 @@ void _write_switch_for_symbol_resolve(_Trie *trie, int index, FILE *file) {
       if (NULL == child) {
         continue;
       }
-      fprintf(file, "%*scase '%c':\n", index * 2, "", (char)i);
+      if (((char)i) == '\\') {
+        fprintf(file, "%*scase '\\\\':\n", index * 2, "");
+      } else {
+        fprintf(file, "%*scase '%c':\n", index * 2, "", (char)i);
+      }
       _write_switch_for_symbol_resolve(child, index + 1, file);
     }
     fprintf(file, "%*sdefault: break;\n", index * 2, "");
@@ -230,8 +254,9 @@ void _write_switch_for_keyword_resolve(_Trie *trie, int index, FILE *file) {
 }
 
 void _write_resolve_type(LexerBuilder *lb, FILE *file) {
-  fprintf(file, "TokenType _symbol_type(const char word[]) {\n");
+  fprintf(file, "TokenType symbol_type(const char word[]) {\n");
   _write_switch_for_symbol_resolve(lb->symbols_trie, 1, file);
+  fprintf(file, "  return TOKENTYPE_UNKNOWN;\n");
   fprintf(file, "}\n\n");
 
   fprintf(file, "TokenType _keyword_type(const char word[], int word_len) {\n");
@@ -239,10 +264,11 @@ void _write_resolve_type(LexerBuilder *lb, FILE *file) {
   _write_switch_for_keyword_resolve(lb->keywords_trie, 1, file);
   fprintf(file, "}\n\n");
 
-  fprintf(file, "TokenType resolve_type(const char word[], int world_len) {\n");
-  fprintf(file, "  TokenType type = _symbol_type(word);\n");
+  fprintf(file, "TokenType resolve_type(const char word[], int word_len) {\n");
+  fprintf(file, "  TokenType type = symbol_type(word);\n");
   fprintf(file, "  if (TOKENTYPE_UNKNOWN == type) { type = _keyword_type(word, "
                 "word_len); }\n");
+  fprintf(file, "  if (TOKENTYPE_UNKNOWN != type) { return type; }\n");
   fprintf(file,
           "  if (is_number(word[0])) {\n"
           "    if (ends_with(word, \"f\") || contains_char(word, '.')) {\n"
@@ -261,19 +287,221 @@ void _write_is_start_of_symbol(LexerBuilder *lb, FILE *file) {
     if (NULL == child) {
       continue;
     }
-    fprintf(file, "    case '%c':\n", (char)i);
+    if (((char)i) == '\\') {
+      fprintf(file, "    case '\\\\':\n");
+    } else {
+      fprintf(file, "    case '%c':\n", (char)i);
+    }
   }
   fprintf(file, "      return true;\n");
   fprintf(file, "    default: return false;\n");
   fprintf(file, "  }\n}\n\n");
 }
 
-void lexer_builder_write_c_file(LexerBuilder *lb, FILE *file) {
-  _write_header(lb, file);
-  _write_token_type_enum(lb, file);
+void _write_is_start_of_open_close(AList *list, const char fn_name[],
+                                   FILE *file) {
+  fprintf(file, "const char *%s(const char word[]) {\n", fn_name);
+  AL_iter iter = alist_iter(list);
+  for (; al_has(&iter); al_inc(&iter)) {
+    _OpenCloseDef *def = (_OpenCloseDef *)al_value(&iter);
+    fprintf(file, "  if (0 == strncmp(\"%s\", word, %d)) {\n", def->open.token,
+            def->open.token_len);
+    fprintf(file, "    return \"%s\";\n  }\n", def->close.token);
+  }
+  fprintf(file, "  return NULL;\n}\n\n");
+}
+
+const char _TOKENIZE_FUNCTIONS_TEXT[] =
+    "inline int _tokenize_number(const LineInfo *li, Q *tokens, int col_num) {\n\
+  char *line = li->line_text;\n\
+  int start = col_num;\n\
+  bool is_decimal = false;\n\
+  while (is_number(line[col_num])) {\n\
+    if ('.' == line[col_num]) {\n\
+      // Decimals cannot have more than 1 decimal point.\n\
+      if (is_decimal) {\n\
+        break;\n\
+      } else {\n\
+        is_decimal = true;\n\
+      }\n\
+    }\n\
+    ++col_num;\n\
+  }\n\
+  if ('f' == line[col_num]) {\n\
+    is_decimal = true;\n\
+    ++col_num;\n\
+  }\n\
+  Token *token =\n\
+      token_create(is_decimal ? TOKEN_FLOATING : TOKEN_INTEGER, li->line_num,\n\
+                   start, line + start, col_num - start);\n\
+  *Q_add_last(tokens) = token;\n\
+  return col_num;\n\
+}\n\
+\n\
+inline int _tokenize_symbol(const LineInfo *li, Q *tokens, int col_num) {\n\
+  char *line = li->line_text;\n\
+  TokenType type = symbol_type(line + col_num);\n\
+  if (TOKENTYPE_UNKNOWN == type) {\n\
+    ERROR(\"UNKNOWN TOKEN\");\n\
+  }\n\
+  const int token_length = strlen(token_type_to_str(type));\n\
+  Token *token =\n\
+      token_create(type, li->line_num, col_num, line + col_num, token_length);\n\
+  *Q_add_last(tokens) = token;\n\
+  col_num += token_length;\n\
+  return col_num;\n\
+}\n\
+\n\
+inline int _tokenize_word(const LineInfo *li, Q *tokens, int col_num) {\n\
+  char *line = li->line_text;\n\
+  int start = col_num++;\n\
+  while (is_alphanumeric(line[col_num])) {\n\
+    ++col_num;\n\
+  }\n\
+  Token *token = token_create(TOKEN_WORD, li->line_num, start, line + start,\n\
+                              col_num - start);\n\
+  *Q_add_last(tokens) = token;\n\
+  return col_num;\n\
+}\n\
+\n\
+inline int _tokenize_newline(const LineInfo *li, Q *tokens, int col_num) {\n\
+  char *line = li->line_text;\n\
+  Token *token =\n\
+      token_create(ENDLINE, li->line_num, col_num, line + col_num, 1);\n\
+  *Q_add_last(tokens) = token;\n\
+  ++col_num;\n\
+  return col_num;\n\
+}\n\
+\n\
+bool _lexer_tokenize_line(FileInfo *fi, Q *tokens, bool *in_comment, bool *in_string,\n\
+                          const char **comment_end, const char **string_end, char ** string_buffer) {\n\
+  LineInfo *li = file_info_getline(fi);\n\
+  if (NULL == li) {\n\
+    return false;\n\
+  }\n\
+  int col_num = 0;\n\
+  int string_start_col = 0;\n\
+  char *line = li->line_text;\n\
+  while (true) {\n\
+    if ('\\0' == line[col_num]) {\n\
+      break;\n\
+    }\n\
+    while (is_whitespace(line[col_num])) {\n\
+      ++col_num;\n\
+    }\n\
+    const char *eoc = is_start_of_comment(line + col_num);\n\
+    if (NULL != eoc) {\n\
+      *in_comment = true;\n\
+      *comment_end = eoc;\n\
+      col_num++;\n\
+      continue;\n\
+    }\n\
+    const char *eos = is_start_of_string(line + col_num);\n\
+    if (NULL != eos) {\n\
+      *in_string = true;\n\
+      *string_end = eos;\n\
+      col_num++;\n\
+      string_start_col = col_num;\n\
+      continue;\n\
+    }\n\
+    if (*in_comment) {\n\
+      char *eoc = find_str(line + col_num,\n\
+                            strlen(line) - col_num, *comment_end, \n\
+                            strlen(*comment_end)); \n\
+      // End of comment not found.\n\
+      if (NULL == eoc) {\n\
+        return true;\n\
+      }\n\
+      col_num = eoc - line + strlen(*comment_end);\n\
+      *in_comment = false;\n\
+      *comment_end = NULL;\n\
+      continue;\n\
+    }\n\
+    if (*in_string) {\n\
+      char *eos = find_str(line + col_num,\n\
+                            strlen(line) - col_num, *string_end, \n\
+                            strlen(*string_end)); \n\
+      if (NULL == eos) {\n\
+        eos = line + strlen(line);\n\
+      }\n\
+      col_num = eos - line;\n\
+      if (NULL == *string_buffer) {\n\
+        *string_buffer = ALLOC_ARRAY2(char, col_num - string_start_col + 1);\n\
+        memmove(*string_buffer, line + string_start_col, col_num - string_start_col);\n\
+        (*string_buffer)[col_num - string_start_col] = '\\0';\n\
+      } else {\n\
+        char *new_string_buffer =\n\
+            ALLOC_ARRAY2(char, strlen(*string_buffer) + col_num - string_start_col + 1);\n\
+        memmove(new_string_buffer, *string_buffer, strlen(*string_buffer));\n\
+        memmove(new_string_buffer + strlen(*string_buffer),  line + string_start_col, col_num - string_start_col);\n\
+        new_string_buffer[strlen(*string_buffer) + col_num - string_start_col] = '\\0';\n\
+        DEALLOC(*string_buffer);\n\
+        *string_buffer = new_string_buffer;\n\
+      }\n\
+      // End of string not found.\n\
+      if (line + strlen(line) == eos) {\n\
+        return true;\n\
+      }\n\
+      Token *token = token_create(TOKEN_STRING,\n\
+                   li->line_num, col_num, *string_buffer, strlen(*string_buffer));\n\
+      DEALLOC(*string_buffer);\n\
+      *string_buffer = NULL;\n\
+      *Q_add_last(tokens) = token;\n\
+      col_num = eos - line + strlen(*string_end);\n\
+      *in_string = false;\n\
+      *string_end = NULL;\n\
+      continue;\n\
+    }\n\
+    if (is_number(line[col_num])) {\n\
+      col_num = _tokenize_number(li, tokens, col_num);\n\
+    } else if (is_start_of_symbol(line + col_num)) {\n\
+      col_num = _tokenize_symbol(li, tokens, col_num);\n\
+    } else if (is_alphanumeric(line[col_num])) {\n\
+      col_num = _tokenize_word(li, tokens, col_num);\n\
+    } else if ('\\n' == line[col_num]) {\n\
+      col_num = _tokenize_newline(li, tokens, col_num);\n\
+    } else {\n\
+      printf(\"%c\", line[col_num+1]);\n\
+      ERROR(\"NEVER HERE!\");\n\
+    }\n\
+  }\n\
+  return true;\n\
+}\n\
+\n\
+void lexer_tokenize(FileInfo *file, Q *tokens) {\n\
+  ASSERT(NOT_NULL(file), NOT_NULL(tokens));\n\
+  bool in_comment = false;\n\
+  const char *comment_end = NULL;\n\
+  bool in_string = false;\n\
+  const char *string_end = NULL;\n\
+  char *string_buffer = NULL;\n\
+  while (_lexer_tokenize_line(file, tokens, &in_comment,&in_string, &comment_end, &string_end, &string_buffer))\n\
+    ;\n\
+}";
+
+void lexer_builder_write_c_file(LexerBuilder *lb, FILE *file,
+                                const char h_file_path[]) {
+  _write_header(lb, file, h_file_path);
   _write_token_type_to_str(lb, file);
   _write_resolve_type(lb, file);
   _write_is_start_of_symbol(lb, file);
+  _write_is_start_of_open_close(&lb->comments, "is_start_of_comment", file);
+  _write_is_start_of_open_close(&lb->strings, "is_start_of_string", file);
+  fprintf(file, "%s\n", _TOKENIZE_FUNCTIONS_TEXT);
+}
+
+void lexer_builder_write_h_file(LexerBuilder *lb, FILE *file) {
+  fprintf(file, "#include <stdbool.h>\n\n");
+  fprintf(file, "#include \"util/file/file_info.h\"\n");
+  fprintf(file, "#include \"struct/q.h\"\n\n");
+  _write_token_type_enum(lb, file);
+  fprintf(file, "TokenType symbol_type(const char word[]);\n");
+  fprintf(file, "const char *token_type_to_str(TokenType token_type);\n");
+  fprintf(file, "TokenType resolve_type(const char word[], int word_len);\n");
+  fprintf(file, "bool is_start_of_symbol(const char word[]);\n");
+  fprintf(file, "const char *is_start_of_comment(const char word[]);\n");
+  fprintf(file, "const char *is_start_of_string(const char word[]);\n");
+  fprintf(file, "void lexer_tokenize(FileInfo *file, Q *tokens);");
 }
 
 void lexer_builder_delete(LexerBuilder *lb) {
