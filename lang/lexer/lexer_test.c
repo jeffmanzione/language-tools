@@ -10,7 +10,7 @@
 int main(int argc, const char *argv[]) {
   alloc_init();
   intern_init();
-  const char test[] = "Dog dog = Dog(/* name */ \'Spike\\', /* weight */ 25.4, "
+  const char test[] = "Dog dog = Dog(/* name */ \'Spike', /* weight */ 25.4, "
                       "4, 5f);\n\ndog.bark();";
   Q tokens;
   Q_init(&tokens);

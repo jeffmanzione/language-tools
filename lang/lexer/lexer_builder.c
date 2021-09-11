@@ -501,7 +501,7 @@ void lexer_builder_write_h_file(LexerBuilder *lb, FILE *file) {
   fprintf(file, "bool is_start_of_symbol(const char word[]);\n");
   fprintf(file, "const char *is_start_of_comment(const char word[]);\n");
   fprintf(file, "const char *is_start_of_string(const char word[]);\n");
-  fprintf(file, "void lexer_tokenize(FileInfo *file, Q *tokens);");
+  fprintf(file, "void lexer_tokenize(FileInfo *file, Q *tokens);\n");
 }
 
 void lexer_builder_delete(LexerBuilder *lb) {
