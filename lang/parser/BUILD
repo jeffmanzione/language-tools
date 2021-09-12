@@ -11,6 +11,10 @@ cc_library(
     deps = [
         "@c_data_structures//struct:alist",
         "@memory_wrapper//alloc",
+        "@memory_wrapper//alloc/arena:intern",
+        "@memory_wrapper//debug",
+        "@memory_wrapper//struct:map",
+        "@memory_wrapper//struct:struct_defaults",
     ],
 )
 
@@ -20,5 +24,7 @@ cc_binary(
     deps = [
         ":parser_builder",
         "//lang/lexer:test_lexer",
+        "@memory_wrapper//alloc",
+        "@memory_wrapper//alloc/arena:intern",
     ],
 )

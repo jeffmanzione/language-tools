@@ -1,7 +1,12 @@
+#include "lang/parser/parser_builder.h"
+
 #include <stdarg.h>
 
 #include "alloc/alloc.h"
+#include "alloc/arena/intern.h"
+#include "debug/debug.h"
 #include "struct/alist.h"
+#include "struct/map.h"
 
 // Hardcoded in lexer.
 #define TOKEN_NEWLINE 1
@@ -9,21 +14,23 @@
 typedef enum { SINGLE, OR, AND } ProductionType;
 
 typedef struct _Production {
-  char *name;
   enum {
     PRODUCTION_EPSILON,
     PRODUCTION_TOKEN,
     PRODUCTION_OR,
-    PRODUCTION_AND
+    PRODUCTION_AND,
+    PRODUCTION_RULE
   } type;
   union {
     AList children;
     int token;
+    char *rule_name;
   };
 } Production;
 
 typedef struct _ParserBuilder {
   Production *root;
+  Map rules;
 } ParserBuilder;
 
 Production *_production_create(ProductionType type) {
@@ -76,31 +83,86 @@ Production *token(int token) {
 
 Production *newline() { return token(TOKEN_NEWLINE); }
 
-Production *line(Production *pb) {
-  Production *pb_parent = _production_multi(PRODUCTION_AND, 0, NULL);
-  alist_append(&pb_parent->children, &pb);
+Production *line(Production *p) {
+  Production *p_parent = _production_multi(PRODUCTION_AND, 0, NULL);
+  alist_append(&p_parent->children, &p);
   Production *nl = newline();
-  alist_append(&pb_parent->children, &nl);
-  return pb_parent;
+  alist_append(&p_parent->children, &nl);
+  return p_parent;
 }
 
 Production *epsilon() { return _production_create(PRODUCTION_EPSILON); }
 
+Production *rule(const char rule_name[]) {
+  Production *p = _production_create(PRODUCTION_RULE);
+  p->rule_name = intern(rule_name);
+  return p;
+}
+
+void production_print(Production *p, TokenToStringFn token_to_str, FILE *out) {
+  switch (p->type) {
+  case PRODUCTION_EPSILON:
+    fprintf(out, "E");
+    return;
+  case PRODUCTION_RULE:
+    fprintf(out, "rule:%s", p->rule_name);
+    return;
+  case PRODUCTION_TOKEN:
+    fprintf(out, "token:%s", token_to_str(p->token));
+    return;
+  default: // pass
+    break;
+  }
+  // Must be AND or OR.
+  const char *sep_word = PRODUCTION_AND == p->type ? "AND" : "OR";
+  AL_iter iter = alist_iter(&p->children);
+  fprintf(out, "( ");
+  production_print(*(Production **)al_value(&iter), token_to_str, out);
+  al_inc(&iter);
+  for (; al_has(&iter); al_inc(&iter)) {
+    fprintf(out, " %s ", sep_word);
+    production_print(*(Production **)al_value(&iter), token_to_str, out);
+  }
+  fprintf(out, " )");
+}
+
 ParserBuilder *parser_builder_create() {
   ParserBuilder *pb = ALLOC2(ParserBuilder);
   pb->root = NULL;
+  map_init_default(&pb->rules);
   return pb;
+}
+
+void parser_builder_rule(ParserBuilder *pb, const char rule_name[],
+                         Production *p) {
+  const char *interned_rule_name = intern(rule_name);
+  if (NULL != map_lookup(&pb->rules, interned_rule_name)) {
+    ERROR("Multiple rules with name '%s'.", rule_name);
+  }
+  map_insert(&pb->rules, interned_rule_name, p);
 }
 
 void parser_builder_set_root(ParserBuilder *pb, Production *p) { pb->root = p; }
 
 void parser_builder_delete(ParserBuilder *pb) {
-  if (NULL != pb->root) {
-    _production_delete(pb->root);
+  M_iter iter = map_iter(&pb->rules);
+  for (; has(&iter); inc(&iter)) {
+    _production_delete(value(&iter));
   }
+  map_finalize(&pb->rules);
   DEALLOC(pb);
 }
 
 void parser_builder_write_c_file(ParserBuilder *pb, FILE *file) {}
 
 void parser_builder_write_h_file(ParserBuilder *pb, FILE *file) {}
+
+void parser_builder_print(ParserBuilder *pb, TokenToStringFn token_to_string,
+                          FILE *out) {
+  M_iter iter = map_iter(&pb->rules);
+  for (; has(&iter); inc(&iter)) {
+    fprintf(out, "%s -> ", (char *)key(&iter));
+    production_print((Production *)value(&iter), token_to_string, out);
+    fprintf(out, "\n");
+  }
+}
