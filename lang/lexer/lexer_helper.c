@@ -4,60 +4,58 @@
 
 #include "alloc/alloc.h"
 
-inline bool is_numeric(const char c) { return ('0' <= c && '9' >= c); }
+bool is_numeric(const char c) { return ('0' <= c && '9' >= c); }
 
-inline bool is_number(const char c) { return is_numeric(c) || '.' == c; }
+bool is_number(const char c) { return is_numeric(c) || '.' == c; }
 
-inline bool is_alphabetic(const char c) {
+bool is_alphabetic(const char c) {
   return ('A' <= c && 'Z' >= c) || ('a' <= c && 'z' >= c);
 }
 
-inline bool is_alphanumeric(const char c) {
+bool is_alphanumeric(const char c) {
   return is_numeric(c) || is_alphabetic(c) || '_' == c || '$' == c;
 }
 
 bool is_any_space(const char c) {
   switch (c) {
-  case ' ':
-  case '\t':
-  case '\n':
-  case '\r':
-    return true;
-  default:
-    return false;
+    case ' ':
+    case '\t':
+    case '\n':
+    case '\r':
+      return true;
+    default:
+      return false;
   }
 }
 
-inline bool is_whitespace(const char c) {
-  return ' ' == c || '\t' == c || '\r' == c;
-}
+bool is_whitespace(const char c) { return ' ' == c || '\t' == c || '\r' == c; }
 
 char char_unesc(char u) {
   switch (u) {
-  case 'a':
-    return '\a';
-  case 'b':
-    return '\b';
-  case 'f':
-    return '\f';
-  case 'n':
-    return '\n';
-  case 'r':
-    return '\r';
-  case 't':
-    return '\t';
-  case 'v':
-    return '\v';
-  case '\\':
-    return '\\';
-  case '\'':
-    return '\'';
-  case '\"':
-    return '\"';
-  case '\?':
-    return '\?';
-  default:
-    return u;
+    case 'a':
+      return '\a';
+    case 'b':
+      return '\b';
+    case 'f':
+      return '\f';
+    case 'n':
+      return '\n';
+    case 'r':
+      return '\r';
+    case 't':
+      return '\t';
+    case 'v':
+      return '\v';
+    case '\\':
+      return '\\';
+    case '\'':
+      return '\'';
+    case '\"':
+      return '\"';
+    case '\?':
+      return '\?';
+    default:
+      return u;
   }
 }
 
@@ -65,29 +63,29 @@ char char_unesc(char u) {
 
 bool _should_escape(char c) {
   switch (c) {
-  case '\'':
-  case '\"':
-  case '\n':
-  case '\r':
-  case '\\':
-    return true;
-  default:
-    return false;
+    case '\'':
+    case '\"':
+    case '\n':
+    case '\r':
+    case '\\':
+      return true;
+    default:
+      return false;
   }
 }
 
 char _excape_char(char c) {
   switch (c) {
-  case '\n':
-    return 'n';
-  case '\t':
-    return 't';
-  case '\r':
-    return 'r';
-  case '\\':
-    return '\\';
-  default:
-    return c;
+    case '\n':
+      return 'n';
+    case '\t':
+      return 't';
+    case '\r':
+      return 'r';
+    case '\\':
+      return '\\';
+    default:
+      return c;
   }
 }
 

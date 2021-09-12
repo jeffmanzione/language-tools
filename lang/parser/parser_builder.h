@@ -15,7 +15,7 @@ void production_builder_delete(ProductionBuilder *pb);
 
 // clang-format off
 #define GET_FUNC(_1, _2, _3, _4, _5, _6, _7, _8, _9, NAME, ...) NAME
-#define or2(p1, p2) __or(2, p1, p2)
+#define or2(p1, p2) __or(2, p1, ep2)
 #define or3(p1, p2, p3) __or(3, p1, p2, p3)
 #define or4(p1, p2, p3, p4) __or(4, p1, p2, p3, p4)
 #define or5(p1, p2, p3, p4, p5) __or(5, p1, p2, p3, p4, p5)
@@ -42,7 +42,12 @@ void production_builder_delete(ProductionBuilder *pb);
       (__VA_ARGS__)
 // clang-format on
 
-void __or(int arg_count, ...);
-void __and(int arg_count, ...);
+ProductionBuilder *__or(int arg_count, ...);
+ProductionBuilder *__and(int arg_count, ...);
+
+ProductionBuilder *token(int token);
+ProductionBuilder *newline();
+ProductionBuilder *line(ProductionBuilder *pb);
+ProductionBuilder *epsilon();
 
 #endif /* LANGUAGE_TOOLS_LANG_PARSER_PARSER_BUILDER_H_ */

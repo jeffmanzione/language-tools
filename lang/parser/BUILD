@@ -8,5 +8,8 @@ cc_library(
     name = "parser_builder",
     srcs = ["parser_builder.c"],
     hdrs = ["parser_builder.h"],
-    deps = [],
+    deps = [
+        "@c_data_structures//struct:alist",
+        "@memory_wrapper//alloc",
+    ],
 )
