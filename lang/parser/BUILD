@@ -13,3 +13,12 @@ cc_library(
         "@memory_wrapper//alloc",
     ],
 )
+
+cc_binary(
+    name = "parser_test",
+    srcs = ["parser_test.c"],
+    deps = [
+        ":parser_builder",
+        "//lang/lexer:test_lexer",
+    ],
+)

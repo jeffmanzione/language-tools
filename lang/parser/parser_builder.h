@@ -4,14 +4,13 @@
 #include <stdio.h>
 
 typedef struct _ParserBuilder ParserBuilder;
-typedef struct _ProductionBuilder ProductionBuilder;
+typedef struct _Production Production;
 
 ParserBuilder *parser_builder_create();
 void parser_builder_delete(ParserBuilder *pb);
 void parser_builder_write_c_file(ParserBuilder *pb, FILE *file);
 void parser_builder_write_h_file(ParserBuilder *pb, FILE *file);
-
-void production_builder_delete(ProductionBuilder *pb);
+void parser_builder_set_root(ParserBuilder *pb, Production *p);
 
 // clang-format off
 #define GET_FUNC(_1, _2, _3, _4, _5, _6, _7, _8, _9, NAME, ...) NAME
@@ -42,12 +41,12 @@ void production_builder_delete(ProductionBuilder *pb);
       (__VA_ARGS__)
 // clang-format on
 
-ProductionBuilder *__or(int arg_count, ...);
-ProductionBuilder *__and(int arg_count, ...);
+Production *__or(int arg_count, ...);
+Production *__and(int arg_count, ...);
 
-ProductionBuilder *token(int token);
-ProductionBuilder *newline();
-ProductionBuilder *line(ProductionBuilder *pb);
-ProductionBuilder *epsilon();
+Production *token(int token);
+Production *newline();
+Production *line(Production *pb);
+Production *epsilon();
 
 #endif /* LANGUAGE_TOOLS_LANG_PARSER_PARSER_BUILDER_H_ */
