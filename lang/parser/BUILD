@@ -18,6 +18,18 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "parser",
+    srcs = ["parser.c"],
+    hdrs = ["parser.h"],
+    deps = [
+        "//lang/lexer:token",
+        "@c_data_structures//struct:alist",
+        "@c_data_structures//struct:q",
+        "@memory_wrapper//alloc/arena",
+    ],
+)
+
 cc_binary(
     name = "parser_test",
     srcs = ["parser_test.c"],
