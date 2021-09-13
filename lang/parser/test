@@ -1,0 +1,28 @@
+
+
+typedef struct {
+  bool matched;
+  AList children;
+} SyntaxTree;
+
+typedef struct {
+
+} Parser;
+
+SyntaxTree NO_MATCH = { .matched = false };
+
+SyntaxTree *_parser_create_st(Parser *parser) {
+
+}
+
+SyntaxTree *_match(Parser *parser) {
+  return _parser_create_st(parser, Q_pop(lexer_tokens(&parser->lexer)));
+}
+
+SyntaxTree* identifier(Parser *parser) {
+  Token *token = parser_next(parser);
+  if (NULL == token || TOKEN_WORD != token->type) {
+    return &NO_MATCH;
+  }
+  return _match(parser);
+}
