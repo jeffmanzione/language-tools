@@ -53,7 +53,6 @@ Production *newline();
 Production *line(Production *p);
 Production *epsilon();
 
-void production_print(Production *p, TokenToStringFn token_to_str, FILE *out);
 void parser_builder_print(ParserBuilder *pb, TokenToStringFn token_to_string,
                           FILE *out);
 
