@@ -205,6 +205,29 @@ void _write_token_type_to_str(LexerBuilder *lb, FILE *file) {
   fprintf(file, "    default: return \"UNKNOWN\";\n  }\n}\n\n");
 }
 
+void _write_token_type_to_name(LexerBuilder *lb, FILE *file) {
+  fprintf(file, "const char *token_type_to_name(TokenType token_type) {\n");
+  fprintf(file, "  switch(token_type) {\n");
+  fprintf(file, "    case TOKEN_NEWLINE: return \"NEWLINE\";\n");
+  fprintf(file, "    case TOKEN_WORD: return \"TOKEN_WORD\";\n");
+  fprintf(file, "    case TOKEN_STRING: return \"TOKEN_STRING\";\n");
+  fprintf(file, "    case TOKEN_INTEGER: return \"TOKEN_INTEGER\";\n");
+  fprintf(file, "    case TOKEN_FLOATING: return \"TOKEN_FLOATING\";\n");
+  AL_iter iter = alist_iter(&lb->symbols);
+  for (; al_has(&iter); al_inc(&iter)) {
+    _TokenDef *token_def = (_TokenDef *)al_value(&iter);
+    fprintf(file, "    case %s: return \"%s\";\n", token_def->token_name,
+            token_def->token_name);
+  }
+  iter = alist_iter(&lb->keywords);
+  for (; al_has(&iter); al_inc(&iter)) {
+    _TokenDef *token_def = (_TokenDef *)al_value(&iter);
+    fprintf(file, "    case %s: return \"%s\";\n", token_def->token_name,
+            token_def->token_name);
+  }
+  fprintf(file, "    default: return \"UNKNOWN\";\n  }\n}\n\n");
+}
+
 void _write_switch_for_symbol_resolve(_Trie *trie, int index, FILE *file) {
   int i;
   const bool has_children = _has_child_trie(trie);
@@ -484,6 +507,7 @@ void lexer_builder_write_c_file(LexerBuilder *lb, FILE *file,
                                 const char h_file_path[]) {
   _write_header(lb, file, h_file_path);
   _write_token_type_to_str(lb, file);
+  _write_token_type_to_name(lb, file);
   _write_resolve_type(lb, file);
   _write_is_start_of_symbol(lb, file);
   _write_is_start_of_open_close(&lb->comments, "is_start_of_comment", file);
@@ -498,6 +522,7 @@ void lexer_builder_write_h_file(LexerBuilder *lb, FILE *file) {
   _write_token_type_enum(lb, file);
   fprintf(file, "TokenType symbol_type(const char word[]);\n");
   fprintf(file, "const char *token_type_to_str(TokenType token_type);\n");
+  fprintf(file, "const char *token_type_to_name(TokenType token_type);\n");
   fprintf(file, "TokenType resolve_type(const char word[], int word_len);\n");
   fprintf(file, "bool is_start_of_symbol(const char word[]);\n");
   fprintf(file, "const char *is_start_of_comment(const char word[]);\n");

@@ -15,7 +15,7 @@ int main(int argc, const char *args[]) {
   parser_builder_rule(pb, "or", and2(rule("identifier"), rule("or1")));
 
   parser_builder_set_root(pb, rule("or"));
-  parser_builder_print(pb, token_type_to_str, stdout);
+  parser_builder_print(pb, token_type_to_name, stdout);
   parser_builder_delete(pb);
 
   intern_finalize();

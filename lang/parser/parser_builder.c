@@ -114,16 +114,20 @@ void production_print(Production *p, TokenToStringFn token_to_str, FILE *out) {
     break;
   }
   // Must be AND or OR.
-  const char *sep_word = PRODUCTION_AND == p->type ? "AND" : "OR";
+  const char *sep_word = PRODUCTION_AND == p->type ? " " : " | ";
   AL_iter iter = alist_iter(&p->children);
-  fprintf(out, "( ");
+  if (p->type == PRODUCTION_OR) {
+    fprintf(out, "( ");
+  }
   production_print(*(Production **)al_value(&iter), token_to_str, out);
   al_inc(&iter);
   for (; al_has(&iter); al_inc(&iter)) {
-    fprintf(out, " %s ", sep_word);
+    fprintf(out, "%s", sep_word);
     production_print(*(Production **)al_value(&iter), token_to_str, out);
   }
-  fprintf(out, " )");
+  if (p->type == PRODUCTION_OR) {
+    fprintf(out, " )");
+  }
 }
 
 ParserBuilder *parser_builder_create() {

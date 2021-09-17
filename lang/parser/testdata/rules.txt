@@ -1,0 +1,3 @@
+identifier -> token:TOKEN_WORD
+or1 -> ( token:KEYWORD_OR rule:or | E )
+or -> rule:identifier rule:or1
