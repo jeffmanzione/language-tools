@@ -83,4 +83,5 @@ SyntaxTree *rule_or(Parser *parser) {
     }
     syntax_tree_add_child(st, st_child);
   }
+  return st;
 }
