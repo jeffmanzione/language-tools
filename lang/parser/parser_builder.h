@@ -11,7 +11,8 @@ ParserBuilder *parser_builder_create();
 void parser_builder_delete(ParserBuilder *pb);
 void parser_builder_write_c_file(ParserBuilder *pb,
                                  TokenToStringFn token_to_str, FILE *file);
-void parser_builder_write_h_file(ParserBuilder *pb, FILE *file);
+void parser_builder_write_h_file(ParserBuilder *pb,
+                                 TokenToStringFn token_to_str, FILE *file);
 void parser_builder_set_root(ParserBuilder *pb, Production *p);
 void parser_builder_rule(ParserBuilder *pb, const char rule_name[],
                          Production *p);

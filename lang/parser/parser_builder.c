@@ -101,33 +101,29 @@ Production *rule(const char rule_name[]) {
 
 void _production_print(Production *p, TokenToStringFn token_to_str, FILE *out) {
   switch (p->type) {
-  case PRODUCTION_EPSILON:
-    fprintf(out, "E");
-    return;
-  case PRODUCTION_RULE:
-    fprintf(out, "rule:%s", p->rule_name);
-    return;
-  case PRODUCTION_TOKEN:
-    fprintf(out, "token:%s", token_to_str(p->token));
-    return;
-  default: // pass
-    break;
+    case PRODUCTION_EPSILON:
+      fprintf(out, "E");
+      return;
+    case PRODUCTION_RULE:
+      fprintf(out, "rule:%s", p->rule_name);
+      return;
+    case PRODUCTION_TOKEN:
+      fprintf(out, "token:%s", token_to_str(p->token));
+      return;
+    default:  // pass
+      break;
   }
   // Must be AND or OR.
   const char *sep_word = PRODUCTION_AND == p->type ? " " : " | ";
   AL_iter iter = alist_iter(&p->children);
-  if (p->type == PRODUCTION_OR) {
-    fprintf(out, "( ");
-  }
+  fprintf(out, "( ");
   _production_print(*(Production **)al_value(&iter), token_to_str, out);
   al_inc(&iter);
   for (; al_has(&iter); al_inc(&iter)) {
     fprintf(out, "%s", sep_word);
     _production_print(*(Production **)al_value(&iter), token_to_str, out);
   }
-  if (p->type == PRODUCTION_OR) {
-    fprintf(out, " )");
-  }
+  fprintf(out, " )");
 }
 
 ParserBuilder *parser_builder_create() {
@@ -157,24 +153,19 @@ void parser_builder_delete(ParserBuilder *pb) {
   DEALLOC(pb);
 }
 
-const char *_create_rule_function_name(const char *production_name,
-                                       char *suffix, int index) {
+const char *_create_rule_function_name(const char *production_name) {
   char buffer[128];
-  int len;
-  if (index == 0) {
-    len = sprintf(buffer, "rule_%s", production_name);
-  } else {
-    len =
-        sprintf(buffer, "rule_%s__%s_helper%d", production_name, suffix, index);
-  }
+  int len = sprintf(buffer, "rule_%s", production_name);
   return intern_range(buffer, 0, len);
 }
 
-void _write_rule_signature(const char *production_name, char *suffix, int index,
-                           FILE *file) {
+void _write_rule_signature(const char *production_name, const Production *p,
+                           bool is_named_rule, FILE *file) {
+  if (!is_named_rule) {
+    fprintf(file, "inline ");
+  }
   fprintf(file, "SyntaxTree *");
-  fprintf(file, "%s",
-          _create_rule_function_name(production_name, suffix, index));
+  fprintf(file, "%s", _create_rule_function_name(production_name));
   fprintf(file, "(Parser *parser)");
 }
 
@@ -186,11 +177,11 @@ const char *_suffix_for(const Production *p) {
 }
 
 void _print_child_function_call(const char *production_name,
-                                const Production *p, int index, FILE *file) {
+                                const Production *p, FILE *file) {
   if (PRODUCTION_AND == p->type || PRODUCTION_OR == p->type ||
       PRODUCTION_TOKEN == p->type) {
     fprintf(file, "%s(parser);\n",
-            _create_rule_function_name(production_name, _suffix_for(p), index));
+            (char *)_create_rule_function_name(production_name));
   } else if (PRODUCTION_RULE == p->type) {
     fprintf(file, "rule_%s(parser);\n", p->rule_name);
   } else if (PRODUCTION_EPSILON == p->type) {
@@ -199,19 +190,28 @@ void _print_child_function_call(const char *production_name,
     ERROR("Unexpected production type: %d.", p->type);
   }
 }
+const char *_production_name_with_child_suffix(const char *production_name,
+                                               const Production *p,
+                                               int child_index) {
+  char buffer[128];
+  int len =
+      sprintf(buffer, "%s__%s%d", production_name, _suffix_for(p), child_index);
+  return intern_range(buffer, 0, len);
+}
 
 void _write_and_body(const char *production_name, const Production *p,
-                     int index, FILE *file) {
+                     FILE *file) {
   fprintf(file, "  SyntaxTree *st = parser_create_st(parser);\n");
-  int child_index = index + 1;
-  int next_index = index + alist_len(&p->children) + 1;
+  int child_index = -1;
   AL_iter children = alist_iter(&p->children);
   for (; al_has(&children); al_inc(&children)) {
+    ++child_index;
     const Production *p_child = *(Production **)al_value(&children);
     fprintf(file, "  {\n    SyntaxTree *st_child = ");
 
-    _print_child_function_call(production_name, p_child, child_index++, file);
-    // SyntaxTree *st_child = _rule_or1__helper1(parser);
+    _print_child_function_call(_production_name_with_child_suffix(
+                                   production_name, p_child, child_index),
+                               p_child, file);
 
     fprintf(file, "    if (!st->matched) {\n");
     fprintf(file, "      parser_delete_st(parser, st);\n");
@@ -222,50 +222,47 @@ void _write_and_body(const char *production_name, const Production *p,
   fprintf(file, "  return st;\n");
 }
 
-void _write_or_body(const char *production_name, const Production *p, int index,
+void _write_or_body(const char *production_name, const Production *p,
                     FILE *file) {
-  int child_index = index + 1;
-  int next_index = index + alist_len(&p->children) + 1;
+  int child_index = -1;
   AL_iter children = alist_iter(&p->children);
   for (; al_has(&children); al_inc(&children)) {
+    ++child_index;
     const Production *p_child = *(Production **)al_value(&children);
     fprintf(file, "  {\n    SyntaxTree *st_child = ");
-
-    _print_child_function_call(production_name, p_child, child_index, file);
-    // SyntaxTree *st_child = _rule_or1__helper1(parser);
-
+    _print_child_function_call(_production_name_with_child_suffix(
+                                   production_name, p_child, child_index),
+                               p_child, file);
     fprintf(file, "    if (st->matched) {\n      return st;\n    }\n  }\n");
   }
   fprintf(file, "  return &NO_MATCH;\n");
 }
 
-int _write_rule_and_subrules_helper(const char *production_name,
-                                    const Production *p, int index,
-                                    int next_index,
-                                    TokenToStringFn token_to_str, FILE *file) {
-  // printf("production_name=%s, index=%d\n", production_name, index);
+void _write_rule_and_subrules(const char *production_name, const Production *p,
+                              TokenToStringFn token_to_str, bool is_named_rule,
+                              FILE *file) {
   if (PRODUCTION_AND == p->type || PRODUCTION_OR == p->type) {
-    int child_index = index + 1;
-    int next_index = index + alist_len(&p->children) + 1;
+    int child_index = -1;
     AL_iter children = alist_iter(&p->children);
     for (; al_has(&children); al_inc(&children)) {
+      ++child_index;
       const Production *p_child = *(Production **)al_value(&children);
       if (PRODUCTION_EPSILON == p_child->type ||
           PRODUCTION_RULE == p_child->type) {
         continue;
       }
-      next_index = _write_rule_and_subrules_helper(production_name, p_child,
-                                                   child_index++, next_index,
-                                                   token_to_str, file);
+      _write_rule_and_subrules(_production_name_with_child_suffix(
+                                   production_name, p_child, child_index),
+                               p_child, token_to_str, false, file);
     }
   }
-  _write_rule_signature(production_name, _suffix_for(p), index, file);
+  _write_rule_signature(production_name, p, is_named_rule, file);
 
   fprintf(file, " {\n");
   if (PRODUCTION_AND == p->type) {
-    _write_and_body(production_name, p, index, file);
+    _write_and_body(production_name, p, file);
   } else if (PRODUCTION_OR == p->type) {
-    _write_or_body(production_name, p, index, file);
+    _write_or_body(production_name, p, file);
   } else if (PRODUCTION_TOKEN == p->type) {
     fprintf(file, "  Token *token = parser_next(parser);\n");
     fprintf(file, "  if (NULL == token || %s != token->type) {\n",
@@ -280,12 +277,6 @@ int _write_rule_and_subrules_helper(const char *production_name,
     ERROR("Unexpected production type: %d.", p->type);
   }
   fprintf(file, "}\n\n");
-  return next_index;
-}
-
-void _write_rule_and_subrules(const char *production_name, const Production *p,
-                              TokenToStringFn token_to_str, FILE *file) {
-  _write_rule_and_subrules_helper(production_name, p, 0, 0, token_to_str, file);
 }
 
 void parser_builder_write_c_file(ParserBuilder *pb,
@@ -294,17 +285,29 @@ void parser_builder_write_c_file(ParserBuilder *pb,
   for (; has(&rules); inc(&rules)) {
     const char *production_name = (const char *)key(&rules);
     const Production *p = (Production *)value(&rules);
-    _write_rule_and_subrules(production_name, p, token_to_str, file);
+    _write_rule_and_subrules(production_name, p, token_to_str, true, file);
   }
 }
 
-void parser_builder_write_h_file(ParserBuilder *pb, FILE *file) {
+void parser_builder_write_h_file(ParserBuilder *pb,
+                                 TokenToStringFn token_to_str, FILE *file) {
+  fprintf(file, "#ifndef LANG_PARSER_TODO_THIS_H_\n");
+  fprintf(file, "#define LANG_PARSER_TODO_THIS_H_\n\n");
+  fprintf(file, "#include \"lang/parser/parser.h\"\n");
+  fprintf(file, "\n");
   M_iter rules = map_iter(&pb->rules);
   for (; has(&rules); inc(&rules)) {
     const char *production_name = (const char *)key(&rules);
-    _write_rule_signature(production_name, NULL, 0, file);
+    const Production *p = (const Production *)value(&rules);
+
+    fprintf(file, "// %s -> ", production_name);
+    _production_print(p, token_to_str, file);
+    fprintf(file, "\n");
+
+    _write_rule_signature(production_name, p, true, file);
     fprintf(file, ";\n");
   }
+  fprintf(file, "\n#endif /* LANG_PARSER_TODO_THIS_H_ */\n");
 }
 
 void parser_builder_print(ParserBuilder *pb, TokenToStringFn token_to_string,

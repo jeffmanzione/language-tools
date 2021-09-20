@@ -7,9 +7,9 @@ void parser_init(Parser *parser, RuleFn root) {
   __arena_init(&parser->st_arena, sizeof(SyntaxTree), "SyntaxTree");
 }
 
-void parser_parse(Parser *parser, Q *tokens) {
+SyntaxTree *parser_parse(Parser *parser, Q *tokens) {
   parser->tokens = tokens;
-  parser->root(parser);
+  return parser->root(parser);
 }
 
 void parser_finalize(Parser *parser) { __arena_finalize(&parser->st_arena); }

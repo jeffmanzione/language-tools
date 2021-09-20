@@ -28,7 +28,7 @@ SyntaxTree MATCH_EPSILON = {
     .matched = true, .token = NULL, .has_children = false};
 
 void parser_init(Parser *parser, RuleFn root);
-void parser_parse(Parser *parser, Q *tokens);
+SyntaxTree *parser_parse(Parser *parser, Q *tokens);
 void parser_finalize(Parser *parser);
 Token *parser_next(Parser *parser);
 SyntaxTree *parser_create_st(Parser *parser);
