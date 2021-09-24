@@ -36,7 +36,7 @@ int main(int argc, const char *args[]) {
   parser_builder_rule(pb, "tuple_expression",
                       and2(rule("or"), rule("tuple_expression1")));
 
-  parser_builder_set_root(pb, rule("tuple_expression"));
+  //   parser_builder_set_root(pb, rule("tuple_expression"));
 
   parser_builder_write_h_file(pb, (TokenToStringFn)token_type_to_name, stdout);
   parser_builder_write_c_file(pb, (TokenToStringFn)token_type_to_name, stdout);

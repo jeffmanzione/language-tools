@@ -10,7 +10,9 @@ typedef const char *(*TokenToStringFn)(int);
 ParserBuilder *parser_builder_create();
 void parser_builder_delete(ParserBuilder *pb);
 void parser_builder_write_c_file(ParserBuilder *pb,
-                                 TokenToStringFn token_to_str, FILE *file);
+                                 TokenToStringFn token_to_str,
+                                 const char h_file_path[],
+                                 const char lexer_h_file_path[], FILE *file);
 void parser_builder_write_h_file(ParserBuilder *pb,
                                  TokenToStringFn token_to_str, FILE *file);
 void parser_builder_set_root(ParserBuilder *pb, Production *p);

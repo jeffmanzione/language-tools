@@ -29,7 +29,7 @@ typedef struct _Production {
 } Production;
 
 typedef struct _ParserBuilder {
-  Production *root;
+  // Production *root;
   Map rules;
 } ParserBuilder;
 
@@ -99,7 +99,8 @@ Production *rule(const char rule_name[]) {
   return p;
 }
 
-void _production_print(Production *p, TokenToStringFn token_to_str, FILE *out) {
+void _production_print(const Production *p, TokenToStringFn token_to_str,
+                       FILE *out) {
   switch (p->type) {
     case PRODUCTION_EPSILON:
       fprintf(out, "E");
@@ -114,21 +115,20 @@ void _production_print(Production *p, TokenToStringFn token_to_str, FILE *out) {
       break;
   }
   // Must be AND or OR.
-  const char *sep_word = PRODUCTION_AND == p->type ? " " : " | ";
   AL_iter iter = alist_iter(&p->children);
-  fprintf(out, "( ");
+  fprintf(out, "%s(", PRODUCTION_AND == p->type ? "and" : "or");
   _production_print(*(Production **)al_value(&iter), token_to_str, out);
   al_inc(&iter);
   for (; al_has(&iter); al_inc(&iter)) {
-    fprintf(out, "%s", sep_word);
+    fprintf(out, ", ");
     _production_print(*(Production **)al_value(&iter), token_to_str, out);
   }
-  fprintf(out, " )");
+  fprintf(out, ")");
 }
 
 ParserBuilder *parser_builder_create() {
   ParserBuilder *pb = ALLOC2(ParserBuilder);
-  pb->root = NULL;
+  // pb->root = NULL;
   map_init_default(&pb->rules);
   return pb;
 }
@@ -142,7 +142,8 @@ void parser_builder_rule(ParserBuilder *pb, const char rule_name[],
   map_insert(&pb->rules, interned_rule_name, p);
 }
 
-void parser_builder_set_root(ParserBuilder *pb, Production *p) { pb->root = p; }
+// void parser_builder_set_root(ParserBuilder *pb, Production *p) { pb->root =
+// p; }
 
 void parser_builder_delete(ParserBuilder *pb) {
   M_iter iter = map_iter(&pb->rules);
@@ -233,7 +234,9 @@ void _write_or_body(const char *production_name, const Production *p,
     _print_child_function_call(_production_name_with_child_suffix(
                                    production_name, p_child, child_index),
                                p_child, file);
-    fprintf(file, "    if (st->matched) {\n      return st;\n    }\n  }\n");
+    fprintf(
+        file,
+        "    if (st_child->matched) {\n      return st_child;\n    }\n  }\n");
   }
   fprintf(file, "  return &NO_MATCH;\n");
 }
@@ -279,8 +282,20 @@ void _write_rule_and_subrules(const char *production_name, const Production *p,
   fprintf(file, "}\n\n");
 }
 
+void _write_header(ParserBuilder *pb, FILE *file, const char h_file_path[],
+                   const char lexer_h_file_path[]) {
+  // Includes.
+  fprintf(file, "#include \"%s\"\n\n", h_file_path);
+  fprintf(file, "#include \"lang/lexer/token.h\"\n");
+  fprintf(file, "#include \"%s\"\n", lexer_h_file_path);
+  fprintf(file, "\n");
+}
+
 void parser_builder_write_c_file(ParserBuilder *pb,
-                                 TokenToStringFn token_to_str, FILE *file) {
+                                 TokenToStringFn token_to_str,
+                                 const char h_file_path[],
+                                 const char lexer_h_file_path[], FILE *file) {
+  _write_header(pb, file, h_file_path, lexer_h_file_path);
   M_iter rules = map_iter(&pb->rules);
   for (; has(&rules); inc(&rules)) {
     const char *production_name = (const char *)key(&rules);
@@ -302,7 +317,7 @@ void parser_builder_write_h_file(ParserBuilder *pb,
 
     fprintf(file, "// %s -> ", production_name);
     _production_print(p, token_to_str, file);
-    fprintf(file, "\n");
+    fprintf(file, ";\n");
 
     _write_rule_signature(production_name, p, true, file);
     fprintf(file, ";\n");
@@ -316,6 +331,6 @@ void parser_builder_print(ParserBuilder *pb, TokenToStringFn token_to_string,
   for (; has(&iter); inc(&iter)) {
     fprintf(out, "%s -> ", (char *)key(&iter));
     _production_print((Production *)value(&iter), token_to_string, out);
-    fprintf(out, "\n");
+    fprintf(out, ";\n");
   }
 }
