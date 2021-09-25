@@ -1,0 +1,11 @@
+identifier -> token:TOKEN_WORD;
+constant -> or(token:TOKEN_INTEGER, token:TOKEN_FLOATING);
+string_literal -> token:TOKEN_STRING;
+array_declaration -> or(and(token:SYMBOL_LBRACKET, token:SYMBOL_RBRACKET), and(token:SYMBOL_RBRACKET, rule:tuple_expression, token:SYMBOL_RBRACKET));
+primary_expression -> or(rule:identifier, rule:constant, rule:string_literal, and(token:SYMBOL_LPAREN, rule:tuple_expression, token:SYMBOL_RPAREN));
+and1 -> or(and(token:KEYWORD_AND, rule:and), E);
+and -> and(rule:primary_expression, rule:and1);
+or1 -> or(and(token:KEYWORD_OR, rule:or), E);
+or -> and(rule:and, rule:or1);
+tuple_expression1 -> or(and(token:SYMBOL_COMMA, rule:or, rule:tuple_expression1), E);
+tuple_expression -> and(rule:or, rule:tuple_expression1);

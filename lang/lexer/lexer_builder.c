@@ -163,7 +163,7 @@ void _write_token_type_enum(LexerBuilder *lb, FILE *file) {
   fprintf(file,
           "typedef enum {\n"
           "  TOKENTYPE_UNKNOWN,\n"
-          "  TOKEN_NEWLINE,\n" // Must stay at index 1 for parser.
+          "  TOKEN_NEWLINE,\n"  // Must stay at index 1 for parser.
           "  TOKEN_WORD,\n"
           "  TOKEN_STRING,\n"
           "  TOKEN_INTEGER,\n"
@@ -208,7 +208,7 @@ void _write_token_type_to_str(LexerBuilder *lb, FILE *file) {
 void _write_token_type_to_name(LexerBuilder *lb, FILE *file) {
   fprintf(file, "const char *token_type_to_name(TokenType token_type) {\n");
   fprintf(file, "  switch(token_type) {\n");
-  fprintf(file, "    case TOKEN_NEWLINE: return \"NEWLINE\";\n");
+  fprintf(file, "    case TOKEN_NEWLINE: return \"TOKEN_NEWLINE\";\n");
   fprintf(file, "    case TOKEN_WORD: return \"TOKEN_WORD\";\n");
   fprintf(file, "    case TOKEN_STRING: return \"TOKEN_STRING\";\n");
   fprintf(file, "    case TOKEN_INTEGER: return \"TOKEN_INTEGER\";\n");
@@ -289,8 +289,9 @@ void _write_resolve_type(LexerBuilder *lb, FILE *file) {
 
   fprintf(file, "TokenType resolve_type(const char word[], int word_len) {\n");
   fprintf(file, "  TokenType type = symbol_type(word);\n");
-  fprintf(file, "  if (TOKENTYPE_UNKNOWN == type) { type = _keyword_type(word, "
-                "word_len); }\n");
+  fprintf(file,
+          "  if (TOKENTYPE_UNKNOWN == type) { type = _keyword_type(word, "
+          "word_len); }\n");
   fprintf(file, "  if (TOKENTYPE_UNKNOWN != type) { return type; }\n");
   fprintf(file,
           "  if (is_number(word[0])) {\n"
@@ -381,8 +382,13 @@ inline int _tokenize_word(const LineInfo *li, Q *tokens, int col_num) {\n\
   while (is_alphanumeric(line[col_num])) {\n\
     ++col_num;\n\
   }\n\
-  Token *token = token_create(TOKEN_WORD, li->line_num, start, line + start,\n\
-                              col_num - start);\n\
+  TokenType token_type = _keyword_type(line + start, col_num - start);\n\
+  Token *token = token_create(\n\
+      token_type == TOKENTYPE_UNKNOWN ? TOKEN_WORD : token_type,\n\
+      li->line_num,\n\
+      start,\n\
+      line + start,\n\
+      col_num - start);\n\
   *Q_add_last(tokens) = token;\n\
   return col_num;\n\
 }\n\

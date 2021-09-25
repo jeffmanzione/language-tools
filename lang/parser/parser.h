@@ -12,6 +12,7 @@ typedef struct _Parser Parser;
 typedef SyntaxTree *(*RuleFn)(Parser *parser);
 
 struct _SyntaxTree {
+  const char *production;
   bool matched, has_children;
   Token *token;
   AList children;
@@ -23,17 +24,17 @@ struct _Parser {
   Q *tokens;
 };
 
-SyntaxTree NO_MATCH = {.matched = false, .has_children = false};
-SyntaxTree MATCH_EPSILON = {
-    .matched = true, .token = NULL, .has_children = false};
+extern SyntaxTree NO_MATCH;
+extern SyntaxTree MATCH_EPSILON;
 
 void parser_init(Parser *parser, RuleFn root);
 SyntaxTree *parser_parse(Parser *parser, Q *tokens);
 void parser_finalize(Parser *parser);
 Token *parser_next(Parser *parser);
-SyntaxTree *parser_create_st(Parser *parser);
+SyntaxTree *parser_create_st(Parser *parser, const char production[]);
 void parser_delete_st(Parser *parser, SyntaxTree *st);
 void syntax_tree_add_child(SyntaxTree *st, SyntaxTree *child);
-SyntaxTree *match(Parser *parser);
+SyntaxTree *match(Parser *parser, const char production[]);
+void syntax_tree_print(const SyntaxTree *st, int level, FILE *out);
 
 #endif /* LANGUAGE_TOOLS_LANG_PARSER_PARSER_H_ */

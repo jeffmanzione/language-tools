@@ -28,10 +28,17 @@ ParserBuilder *_create_parser_builder() {
   parser_builder_rule(pb, "production_expression",
                       or5(rule("and"), rule("or"), rule("rule"), rule("token"),
                           rule("epsilon")));
+  parser_builder_rule(pb, "production_rule",
+                      and3(token(TOKEN_WORD), token(SYMBOL_ARROW),
+                           rule("production_expression")));
   parser_builder_rule(
-      pb, "production_rule",
-      and4(token(TOKEN_WORD), token(SYMBOL_ARROW),
-           rule("production_expression"), token(SYMOBL_SEMICOLON)));
+      pb, "production_rule_set1",
+      or2(and4(token(SYMOBL_SEMICOLON), token(TOKEN_NEWLINE),
+               rule("production_rule"), rule("production_rule_set1")),
+          epsilon()));
+  parser_builder_rule(
+      pb, "production_rule_set",
+      and2(rule("production_rule"), rule("production_rule_set1")));
   return pb;
 }
 
@@ -40,21 +47,16 @@ int main(int argc, const char *argv[]) {
   intern_init();
 
   bool header = 0 == strcmp("header", argv[1]);
-  FILE *out_file = FILE_FN(argv[2], "w");
 
   ParserBuilder *pb = _create_parser_builder();
 
   if (header) {
     parser_builder_write_h_file(pb, (TokenToStringFn)token_type_to_name,
-                                out_file);
+                                stdout);
   } else {
-    char *dir_path, *file_name, *ext;
-    split_path_file(argv[2], &dir_path, &file_name, &ext);
-    char *h_file_path = combine_path_file(dir_path, file_name, ".h");
     parser_builder_write_c_file(pb, (TokenToStringFn)token_type_to_name,
-                                h_file_path, argv[3], out_file);
+                                argv[2], argv[3], stdout);
   }
-  fclose(out_file);
 
   parser_builder_delete(pb);
 
