@@ -11,6 +11,8 @@ cc_binary(
         ":production_rules",
         "//lang/lexer:token",
         "//lang/parser/production_lexer",
+        "//lang/semantic_analyzer",
+        "//lang/semantic_analyzer:expression_tree",
         "@c_data_structures//struct:q",
         "@file_utils//util/file:file_info",
         "@memory_wrapper//alloc/arena:intern",
