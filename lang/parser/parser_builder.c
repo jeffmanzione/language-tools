@@ -19,7 +19,8 @@ typedef struct _Production {
     PRODUCTION_TOKEN,
     PRODUCTION_OR,
     PRODUCTION_AND,
-    PRODUCTION_RULE
+    PRODUCTION_RULE,
+    PRODUCTION_OPTIONAL
   } type;
   union {
     AList children;
@@ -29,7 +30,6 @@ typedef struct _Production {
 } Production;
 
 typedef struct _ParserBuilder {
-  // Production *root;
   Map rules;
 } ParserBuilder;
 
@@ -52,15 +52,15 @@ void _production_delete(Production *p) {
 
 inline Production *_production_multi(ProductionType type, int arg_count,
                                      va_list valist) {
-  Production *pb = _production_create(type);
-  alist_init(&pb->children, Production *, DEFAULT_ARRAY_SZ);
+  Production *p = _production_create(type);
+  alist_init(&p->children, Production *, DEFAULT_ARRAY_SZ);
   int i;
   for (i = 0; i < arg_count; i++) {
     Production *exp = va_arg(valist, Production *);
-    alist_append(&pb->children, &exp);
+    alist_append(&p->children, &exp);
   }
   va_end(valist);
-  return pb;
+  return p;
 }
 
 Production *__or(int arg_count, ...) {
@@ -76,9 +76,16 @@ Production *__and(int arg_count, ...) {
 }
 
 Production *token(int token) {
-  Production *pb = _production_create(PRODUCTION_TOKEN);
-  pb->token = token;
-  return pb;
+  Production *p = _production_create(PRODUCTION_TOKEN);
+  p->token = token;
+  return p;
+}
+
+Production *optional(Production *p_child) {
+  Production *p = _production_create(PRODUCTION_OPTIONAL);
+  alist_init(&p->children, Production *, DEFAULT_ARRAY_SZ);
+  alist_append(&p->children, &p_child);
+  return p;
 }
 
 Production *newline() { return token(TOKEN_NEWLINE); }
@@ -116,7 +123,10 @@ void _production_print(const Production *p, TokenToStringFn token_to_str,
   }
   // Must be AND or OR.
   AL_iter iter = alist_iter(&p->children);
-  fprintf(out, "%s(", PRODUCTION_AND == p->type ? "and" : "or");
+  const char *production_type = PRODUCTION_AND == p->type   ? "AND"
+                                : PRODUCTION_AND == p->type ? "OR"
+                                                            : "OPTIONAL";
+  fprintf(out, "%s(", production_type);
   _production_print(*(Production **)al_value(&iter), token_to_str, out);
   al_inc(&iter);
   for (; al_has(&iter); al_inc(&iter)) {
@@ -171,16 +181,17 @@ void _write_rule_signature(const char *production_name, const Production *p,
 }
 
 const char *_suffix_for(const Production *p) {
-  return PRODUCTION_TOKEN == p->type ? "token"
-         : PRODUCTION_AND == p->type ? "and"
-         : PRODUCTION_OR == p->type  ? "or"
-                                     : NULL;
+  return PRODUCTION_TOKEN == p->type      ? "token"
+         : PRODUCTION_AND == p->type      ? "and"
+         : PRODUCTION_OR == p->type       ? "or"
+         : PRODUCTION_OPTIONAL == p->type ? "opt"
+                                          : NULL;
 }
 
 void _print_child_function_call(const char *production_name,
                                 const Production *p, FILE *file) {
   if (PRODUCTION_AND == p->type || PRODUCTION_OR == p->type ||
-      PRODUCTION_TOKEN == p->type) {
+      PRODUCTION_TOKEN == p->type || PRODUCTION_OPTIONAL == p->type) {
     fprintf(file, "%s(parser);\n",
             (char *)_create_rule_function_name(production_name));
   } else if (PRODUCTION_RULE == p->type) {
@@ -212,16 +223,30 @@ void _write_and_body(const char *production_name, const Production *p,
     const Production *p_child = *(Production **)al_value(&children);
     fprintf(file, "  {\n    SyntaxTree *st_child = ");
 
-    _print_child_function_call(_production_name_with_child_suffix(
-                                   production_name, p_child, child_index),
-                               p_child, file);
-
-    fprintf(file, "    if (!st_child->matched) {\n");
-    fprintf(file, "      parser_delete_st(parser, st);\n");
-    fprintf(file, "      return &NO_MATCH;\n    }\n");
-    fprintf(file, "    syntax_tree_add_child(st, st_child);\n");
-    fprintf(file, "  }\n");
+    if (PRODUCTION_OPTIONAL == p_child->type) {
+      // printf("HERE\n");
+      // fflush(stdout);
+      const Production *p_child_child =
+          *(Production **)alist_get(&p_child->children, 0);
+      _print_child_function_call(_production_name_with_child_suffix(
+                                     production_name, p_child, child_index),
+                                 p_child, file);
+      fprintf(file, "    if (st_child->matched) {\n");
+      fprintf(file,
+              "       syntax_tree_add_child(st, st_child);\n    }\n  }\n");
+    } else {
+      _print_child_function_call(_production_name_with_child_suffix(
+                                     production_name, p_child, child_index),
+                                 p_child, file);
+      fprintf(file, "    if (!st_child->matched) {\n");
+      fprintf(file, "      parser_delete_st(parser, st);\n");
+      fprintf(file, "      return &NO_MATCH;\n    }\n");
+      fprintf(file, "    syntax_tree_add_child(st, st_child);\n  }\n");
+    }
   }
+  fprintf(file, "  if (!st->has_children) {\n");
+  fprintf(file, "    parser_delete_st(parser, st);\n");
+  fprintf(file, "    return &NO_MATCH;\n  }\n");
   fprintf(file, "  st->matched = true;\n  return st;\n");
 }
 
@@ -261,6 +286,9 @@ void _write_rule_and_subrules(const char *production_name, const Production *p,
                                p_child, token_to_str, false, file);
     }
   }
+  if (PRODUCTION_OPTIONAL == p->type) {
+    p = *(Production **)alist_get(&p->children, 0);
+  }
   _write_rule_signature(production_name, p, is_named_rule, file);
 
   fprintf(file, " {\n");
@@ -268,6 +296,13 @@ void _write_rule_and_subrules(const char *production_name, const Production *p,
     _write_and_body(production_name, p, file);
   } else if (PRODUCTION_OR == p->type) {
     _write_or_body(production_name, p, file);
+  } else if (PRODUCTION_OPTIONAL == p->type) {
+    fprintf(file, "  Token *token = parser_next(parser);\n");
+    fprintf(file, "  if (NULL == token || %s != token->type) {\n",
+            token_to_str(p->token));
+    fprintf(file, "    return &NO_MATCH;\n  }\n");
+    fprintf(file, "  return match(parser, rule_%s, \"%s\");\n", production_name,
+            production_name);
   } else if (PRODUCTION_TOKEN == p->type) {
     fprintf(file, "  Token *token = parser_next(parser);\n");
     fprintf(file, "  if (NULL == token || %s != token->type) {\n",

@@ -54,6 +54,7 @@ Production *__and(int arg_count, ...);
 Production *rule(const char rule_name[]);
 Production *token(int token);
 Production *newline();
+Production *optional(Production *p_child);
 Production *line(Production *p);
 Production *epsilon();
 

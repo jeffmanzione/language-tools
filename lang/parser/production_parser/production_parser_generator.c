@@ -33,7 +33,7 @@ ParserBuilder *_create_parser_builder() {
                            rule("production_expression")));
   parser_builder_rule(
       pb, "production_rule_set1",
-      or2(and4(token(SYMOBL_SEMICOLON), token(TOKEN_NEWLINE),
+      or2(and4(token(SYMOBL_SEMICOLON), optional(token(TOKEN_NEWLINE)),
                rule("production_rule"), rule("production_rule_set1")),
           epsilon()));
   parser_builder_rule(
