@@ -35,9 +35,11 @@ Token *parser_remove(Parser *parser) {
   return token;
 }
 
-SyntaxTree *parser_create_st(Parser *parser, const char *production) {
+SyntaxTree *parser_create_st(Parser *parser, RuleFn rule_fn,
+                             const char *production_name) {
   SyntaxTree *st = (SyntaxTree *)__arena_alloc(&parser->st_arena);
-  st->production = production;
+  st->rule_fn = rule_fn;
+  st->production_name = production_name;
   st->has_children = false;
   st->token = NULL;
   return st;
@@ -71,8 +73,9 @@ void syntax_tree_add_child(SyntaxTree *st, SyntaxTree *child) {
   alist_append(&st->children, &child);
 }
 
-SyntaxTree *match(Parser *parser, const char production[]) {
-  SyntaxTree *st = parser_create_st(parser, production);
+SyntaxTree *match(Parser *parser, RuleFn rule_fn,
+                  const char production_name[]) {
+  SyntaxTree *st = parser_create_st(parser, rule_fn, production_name);
   st->matched = true;
   st->token = Q_pop(parser->tokens);
   st->has_children = false;
@@ -87,18 +90,19 @@ void _print_tabs(FILE *file, int num_tabs) {
 }
 
 void syntax_tree_print(const SyntaxTree *st, int level, FILE *out) {
+  if (&NO_MATCH == st) {
+    fprintf(out, "NO_MATCH");
+    return;
+  }
   _print_tabs(out, level);
-  if (NULL != st->production) {
-    fprintf(out, "[%s] ", st->production);
+  if (NULL != st->production_name) {
+    fprintf(out, "[%s] ", st->production_name);
   }
   if (!st->has_children) {
-    if (&NO_MATCH == st) {
-      printf("OH NO\n");
-    }
     if (&MATCH_EPSILON == st) {
       fprintf(out, "E");
     } else {
-      char *text = st->token->text;
+      const char *text = st->token->text;
       if ('\n' == text[0]) {
         fprintf(out, "\\n");
       } else {

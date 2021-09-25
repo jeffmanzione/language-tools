@@ -202,8 +202,9 @@ const char *_production_name_with_child_suffix(const char *production_name,
 
 void _write_and_body(const char *production_name, const Production *p,
                      FILE *file) {
-  fprintf(file, "  SyntaxTree *st = parser_create_st(parser, \"%s\");\n",
-          production_name);
+  fprintf(file,
+          "  SyntaxTree *st = parser_create_st(parser, rule_%s, \"%s\");\n",
+          production_name, production_name);
   int child_index = -1;
   AL_iter children = alist_iter(&p->children);
   for (; al_has(&children); al_inc(&children)) {
@@ -263,7 +264,6 @@ void _write_rule_and_subrules(const char *production_name, const Production *p,
   _write_rule_signature(production_name, p, is_named_rule, file);
 
   fprintf(file, " {\n");
-  // fprintf(file, "  printf(\"rule_%s\\n\");\n", production_name);
   if (PRODUCTION_AND == p->type) {
     _write_and_body(production_name, p, file);
   } else if (PRODUCTION_OR == p->type) {
@@ -273,7 +273,8 @@ void _write_rule_and_subrules(const char *production_name, const Production *p,
     fprintf(file, "  if (NULL == token || %s != token->type) {\n",
             token_to_str(p->token));
     fprintf(file, "    return &NO_MATCH;\n  }\n");
-    fprintf(file, "  return match(parser, \"%s\");\n", production_name);
+    fprintf(file, "  return match(parser, rule_%s, \"%s\");\n", production_name,
+            production_name);
   } else if (PRODUCTION_RULE == p->type) {
     fprintf(file, "  return rule_%s(parser);\n", p->rule_name);
   } else if (PRODUCTION_EPSILON == p->type) {
