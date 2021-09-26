@@ -7,6 +7,7 @@
 #include "debug/debug.h"
 #include "struct/alist.h"
 #include "struct/map.h"
+#include "util/string.h"
 
 // Hardcoded in lexer.
 #define TOKEN_NEWLINE 1
@@ -211,11 +212,21 @@ const char *_production_name_with_child_suffix(const char *production_name,
   return intern_range(buffer, 0, len);
 }
 
+bool _is_helper_rule(const char production_name[]) {
+  return NULL !=
+         find_str((char *)production_name, strlen(production_name), "__", 2);
+}
+
 void _write_and_body(const char *production_name, const Production *p,
                      FILE *file) {
-  fprintf(file,
-          "  SyntaxTree *st = parser_create_st(parser, rule_%s, \"%s\");\n",
-          production_name, production_name);
+  if (_is_helper_rule(production_name)) {
+    fprintf(file, "  SyntaxTree *st = parser_create_st(parser, NULL, \"\");\n",
+            production_name, production_name);
+  } else {
+    fprintf(file,
+            "  SyntaxTree *st = parser_create_st(parser, rule_%s, \"%s\");\n",
+            production_name, production_name);
+  }
   int child_index = -1;
   AL_iter children = alist_iter(&p->children);
   for (; al_has(&children); al_inc(&children)) {
@@ -224,8 +235,6 @@ void _write_and_body(const char *production_name, const Production *p,
     fprintf(file, "  {\n    SyntaxTree *st_child = ");
 
     if (PRODUCTION_OPTIONAL == p_child->type) {
-      // printf("HERE\n");
-      // fflush(stdout);
       const Production *p_child_child =
           *(Production **)alist_get(&p_child->children, 0);
       _print_child_function_call(_production_name_with_child_suffix(
@@ -261,9 +270,13 @@ void _write_or_body(const char *production_name, const Production *p,
     _print_child_function_call(_production_name_with_child_suffix(
                                    production_name, p_child, child_index),
                                p_child, file);
-    fprintf(
-        file,
-        "    if (st_child->matched) {\n      return st_child;\n    }\n  }\n");
+    fprintf(file, "    if (st_child->matched) {\n");
+    fprintf(file, "      if (NULL == st_child->rule_fn) {\n");
+    fprintf(file, "        st_child->rule_fn = rule_%s;\n", production_name);
+    fprintf(file, "        st_child->production_name = \"%s\";\n",
+            production_name);
+    fprintf(file, "      }\n");
+    fprintf(file, "      return st_child;\n    }\n  }\n");
   }
   fprintf(file, "  return &NO_MATCH;\n");
 }

@@ -10,6 +10,7 @@ cc_library(
     hdrs = ["parser_builder.h"],
     deps = [
         "@c_data_structures//struct:alist",
+        "@file_utils//util:string",
         "@memory_wrapper//alloc",
         "@memory_wrapper//alloc/arena:intern",
         "@memory_wrapper//debug",

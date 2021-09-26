@@ -10,6 +10,10 @@ typedef struct {
   Map deleters;
 } SemanticAnalyzer;
 
+typedef ExpressionTree *(*Populator)(const SyntaxTree *tree,
+                                     SemanticAnalyzer *analyzer);
+typedef void (*EDeleter)(ExpressionTree *tree, SemanticAnalyzer *analyzer);
+
 typedef void (*SemanticAnalyzerInitFn)(Map *, Map *);
 
 void semantic_analyzer_init(SemanticAnalyzer *analyzer,

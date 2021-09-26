@@ -21,7 +21,7 @@ ExpressionTree *semantic_analyzer_populate(SemanticAnalyzer *analyzer,
   if (NULL == populate) {
     ERROR("Populator not found: %s", tree->production_name);
   }
-  return populate(tree);
+  return populate(tree, analyzer);
 }
 
 void semantic_analyzer_delete(SemanticAnalyzer *analyzer,
@@ -30,7 +30,7 @@ void semantic_analyzer_delete(SemanticAnalyzer *analyzer,
   if (NULL == delete) {
     ERROR("Deleter not found: %s", tree->rule_name);
   }
-  delete (tree);
+  delete (tree, analyzer);
   DEALLOC(tree->expression);
   DEALLOC(tree);
 }

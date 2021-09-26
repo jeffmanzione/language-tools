@@ -7,21 +7,40 @@
 #include "struct/q.h"
 #include "util/file/file_info.h"
 
-DefineExpression(production_rule) { int a; };
+DefineExpression(production_rule) {
+  const char *rule_name;
+  ExpressionTree *production;
+};
 
-ImplPopulate(production_rule, const SyntaxTree *stree) {
-  production_rule->a = 1;
+DefineExpression(production_rule_set) { AList rules; };
+
+ImplPopulate(production_rule, const SyntaxTree *stree,
+             SemanticAnalyzer *analyzer) {
+  production_rule->production = NULL;
 }
 
-ImplDelete(production_rule) {}
-
-DefineExpression(production_rule_set) { int b; };
-
-ImplPopulate(production_rule_set, const SyntaxTree *stree) {
-  production_rule_set->b = 352;
+ImplDelete(production_rule, SemanticAnalyzer *analyzer) {
+  if (NULL != production_rule->production) {
+    semantic_analyzer_delete(analyzer, production_rule->production);
+  }
 }
 
-ImplDelete(production_rule_set) {}
+ImplPopulate(production_rule_set, const SyntaxTree *stree,
+             SemanticAnalyzer *analyzer) {
+  alist_init(&production_rule_set->rules, ExpressionTree *, DEFAULT_ARRAY_SZ);
+  const SyntaxTree *first = *(SyntaxTree **)alist_get(&stree->children, 0);
+  ExpressionTree *first_rule = semantic_analyzer_populate(analyzer, first);
+  alist_append(&production_rule_set->rules, &first_rule);
+  
+}
+
+ImplDelete(production_rule_set, SemanticAnalyzer *analyzer) {
+  AL_iter iter = alist_iter(&production_rule_set->rules);
+  for (; al_has(&iter); al_inc(&iter)) {
+    semantic_analyzer_delete(analyzer, *(ExpressionTree **)al_value(&iter));
+  }
+  alist_finalize(&production_rule_set->rules);
+}
 
 void _init_semantics(Map *populators, Map *deleters) {
   Register(production_rule);
@@ -55,7 +74,6 @@ int main(int argc, const char *argv[]) {
   semantic_analyzer_init(&analyzer, _init_semantics);
 
   ExpressionTree *etree = semantic_analyzer_populate(&analyzer, productions);
-  printf("%d\n", ((Expression_production_rule_set *)etree->expression)->b);
   semantic_analyzer_delete(&analyzer, etree);
 
   semantic_analyzer_finalize(&analyzer);
@@ -65,6 +83,5 @@ int main(int argc, const char *argv[]) {
   token_finalize_all();
   intern_finalize();
   alloc_finalize();
-
   return 0;
 }

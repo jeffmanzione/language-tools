@@ -16,33 +16,33 @@ typedef struct {
   void *expression;
 } ExpressionTree;
 
-typedef ExpressionTree *(*Populator)(const SyntaxTree *tree);
-typedef void (*EDeleter)(ExpressionTree *tree);
-
-#define DefineExpression(name)                                            \
-  typedef struct _Expression_##name Expression_##name;                    \
-  ExpressionTree *Populate_##name(const SyntaxTree *tree);                \
-  void Transform_##name(const SyntaxTree *tree, Expression_##name *name); \
-  void Delete_##name(ExpressionTree *tree);                               \
-  void Delete_##name##_inner(Expression_##name *name);                    \
+#define DefineExpression(name)                                           \
+  typedef struct _Expression_##name Expression_##name;                   \
+  ExpressionTree *Populate_##name(const SyntaxTree *tree,                \
+                                  SemanticAnalyzer *analyzer);           \
+  void Transform_##name(const SyntaxTree *tree, Expression_##name *name, \
+                        SemanticAnalyzer *analyzer);                     \
+  void Delete_##name(ExpressionTree *tree, SemanticAnalyzer *analyzer);  \
+  void Delete_##name##_inner(Expression_##name *name,                    \
+                             SemanticAnalyzer *analyzer);                \
   struct _Expression_##name
 
-#define ImplPopulate(name, stree_input)             \
-  ExpressionTree *Populate_##name(stree_input) {    \
-    ExpressionTree *etree = ALLOC2(ExpressionTree); \
-    etree->type = rule_##name;                      \
-    etree->rule_name = #name;                       \
-    etree->expression = ALLOC(Expression_##name);   \
-    Transform_##name(stree, etree->expression);     \
-    return etree;                                   \
-  }                                                 \
-  void Transform_##name(stree_input, Expression_##name *name)
+#define ImplPopulate(name, stree_input, analyzer_input)          \
+  ExpressionTree *Populate_##name(stree_input, analyzer_input) { \
+    ExpressionTree *etree = ALLOC2(ExpressionTree);              \
+    etree->type = rule_##name;                                   \
+    etree->rule_name = #name;                                    \
+    etree->expression = ALLOC(Expression_##name);                \
+    Transform_##name(stree, etree->expression, analyzer);        \
+    return etree;                                                \
+  }                                                              \
+  void Transform_##name(stree_input, Expression_##name *name, analyzer_input)
 
-#define ImplDelete(name)                     \
-  void Delete_##name(ExpressionTree *tree) { \
-    Delete_##name##_inner(tree->expression); \
-  }                                          \
-  void Delete_##name##_inner(Expression_##name *name)
+#define ImplDelete(name, analyzer_input)                     \
+  void Delete_##name(ExpressionTree *tree, analyzer_input) { \
+    Delete_##name##_inner(tree->expression, analyzer);       \
+  }                                                          \
+  void Delete_##name##_inner(Expression_##name *name, analyzer_input)
 
 #define Register(name)                                    \
   {                                                       \
