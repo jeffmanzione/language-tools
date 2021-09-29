@@ -58,6 +58,10 @@ Production *optional(Production *p_child);
 Production *line(Production *p);
 Production *epsilon();
 
+Production *production_and();
+Production *production_or();
+void production_add_child(Production *parent, Production *child);
+
 void parser_builder_print(ParserBuilder *pb, TokenToStringFn token_to_string,
                           FILE *out);
 

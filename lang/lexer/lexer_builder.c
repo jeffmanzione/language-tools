@@ -205,6 +205,33 @@ void _write_token_type_to_str(LexerBuilder *lb, FILE *file) {
   fprintf(file, "    default: return \"UNKNOWN\";\n  }\n}\n\n");
 }
 
+void _write_token_name_to_token_type(LexerBuilder *lb, FILE *file) {
+  fprintf(file, "TokenType token_name_to_token_type(const char str[]) {\n");
+  fprintf(file,
+          "  if (0 == strcmp(\"TOKEN_NEWLINE\", str)) return TOKEN_NEWLINE;\n");
+  fprintf(file, "  if (0 == strcmp(\"TOKEN_WORD\", str)) return TOKEN_WORD;\n");
+  fprintf(file,
+          "  if (0 == strcmp(\"TOKEN_STRING\", str)) return TOKEN_STRING;\n");
+  fprintf(file,
+          "  if (0 == strcmp(\"TOKEN_INTEGER\", str)) return TOKEN_INTEGER;\n");
+  fprintf(
+      file,
+      "  if (0 == strcmp(\"TOKEN_FLOATING\", str)) return TOKEN_FLOATING;\n");
+  AL_iter iter = alist_iter(&lb->symbols);
+  for (; al_has(&iter); al_inc(&iter)) {
+    _TokenDef *token_def = (_TokenDef *)al_value(&iter);
+    fprintf(file, "  if (0 == strcmp(\"%s\", str)) return %s;\n",
+            token_def->token_name, token_def->token_name);
+  }
+  iter = alist_iter(&lb->keywords);
+  for (; al_has(&iter); al_inc(&iter)) {
+    _TokenDef *token_def = (_TokenDef *)al_value(&iter);
+    fprintf(file, "  if (0 == strcmp(\"%s\", str)) return %s;\n",
+            token_def->token_name, token_def->token_name);
+  }
+  fprintf(file, "    return 0;\n}\n\n");
+}
+
 void _write_token_type_to_name(LexerBuilder *lb, FILE *file) {
   fprintf(file, "const char *token_type_to_name(TokenType token_type) {\n");
   fprintf(file, "  switch(token_type) {\n");
@@ -514,6 +541,7 @@ void lexer_builder_write_c_file(LexerBuilder *lb, FILE *file,
   _write_header(lb, file, h_file_path);
   _write_token_type_to_str(lb, file);
   _write_token_type_to_name(lb, file);
+  _write_token_name_to_token_type(lb, file);
   _write_resolve_type(lb, file);
   _write_is_start_of_symbol(lb, file);
   _write_is_start_of_open_close(&lb->comments, "is_start_of_comment", file);
@@ -522,6 +550,8 @@ void lexer_builder_write_c_file(LexerBuilder *lb, FILE *file,
 }
 
 void lexer_builder_write_h_file(LexerBuilder *lb, FILE *file) {
+  fprintf(file, "#ifndef LANG_LEXER_CUSTOM_LEXER_H_\n");
+  fprintf(file, "#define LANG_LEXER_CUSTOM_LEXER_H_\n\n");
   fprintf(file, "#include <stdbool.h>\n\n");
   fprintf(file, "#include \"util/file/file_info.h\"\n");
   fprintf(file, "#include \"struct/q.h\"\n\n");
@@ -529,11 +559,13 @@ void lexer_builder_write_h_file(LexerBuilder *lb, FILE *file) {
   fprintf(file, "TokenType symbol_type(const char word[]);\n");
   fprintf(file, "const char *token_type_to_str(TokenType token_type);\n");
   fprintf(file, "const char *token_type_to_name(TokenType token_type);\n");
+  fprintf(file, "TokenType token_name_to_token_type(const char str[]);\n");
   fprintf(file, "TokenType resolve_type(const char word[], int word_len);\n");
   fprintf(file, "bool is_start_of_symbol(const char word[]);\n");
   fprintf(file, "const char *is_start_of_comment(const char word[]);\n");
   fprintf(file, "const char *is_start_of_string(const char word[]);\n");
   fprintf(file, "void lexer_tokenize(FileInfo *file, Q *tokens);\n");
+  fprintf(file, "\n#endif /* LANG_LEXER_CUSTOM_LEXER_H_ */\n");
 }
 
 void lexer_builder_delete(LexerBuilder *lb) {

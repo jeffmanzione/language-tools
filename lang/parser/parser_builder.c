@@ -12,17 +12,17 @@
 // Hardcoded in lexer.
 #define TOKEN_NEWLINE 1
 
-typedef enum { SINGLE, OR, AND } ProductionType;
+typedef enum {
+  PRODUCTION_EPSILON,
+  PRODUCTION_TOKEN,
+  PRODUCTION_OR,
+  PRODUCTION_AND,
+  PRODUCTION_RULE,
+  PRODUCTION_OPTIONAL
+} ProductionType;
 
 typedef struct _Production {
-  enum {
-    PRODUCTION_EPSILON,
-    PRODUCTION_TOKEN,
-    PRODUCTION_OR,
-    PRODUCTION_AND,
-    PRODUCTION_RULE,
-    PRODUCTION_OPTIONAL
-  } type;
+  ProductionType type;
   union {
     AList children;
     int token;
@@ -51,10 +51,25 @@ void _production_delete(Production *p) {
   DEALLOC(p);
 }
 
-inline Production *_production_multi(ProductionType type, int arg_count,
-                                     va_list valist) {
+Production *_production_multi_helper(ProductionType type) {
   Production *p = _production_create(type);
   alist_init(&p->children, Production *, DEFAULT_ARRAY_SZ);
+  return p;
+}
+
+Production *production_and() {
+  return _production_multi_helper(PRODUCTION_AND);
+}
+
+Production *production_or() { return _production_multi_helper(PRODUCTION_OR); }
+
+void production_add_child(Production *parent, Production *child) {
+  alist_append(&parent->children, &child);
+}
+
+inline Production *_production_multi(ProductionType type, int arg_count,
+                                     va_list valist) {
+  Production *p = _production_multi_helper(type);
   int i;
   for (i = 0; i < arg_count; i++) {
     Production *exp = va_arg(valist, Production *);
@@ -124,9 +139,9 @@ void _production_print(const Production *p, TokenToStringFn token_to_str,
   }
   // Must be AND or OR.
   AL_iter iter = alist_iter(&p->children);
-  const char *production_type = PRODUCTION_AND == p->type   ? "AND"
-                                : PRODUCTION_AND == p->type ? "OR"
-                                                            : "OPTIONAL";
+  const char *production_type = PRODUCTION_AND == p->type  ? "AND"
+                                : PRODUCTION_OR == p->type ? "OR"
+                                                           : "OPTIONAL";
   fprintf(out, "%s(", production_type);
   _production_print(*(Production **)al_value(&iter), token_to_str, out);
   al_inc(&iter);
@@ -139,7 +154,6 @@ void _production_print(const Production *p, TokenToStringFn token_to_str,
 
 ParserBuilder *parser_builder_create() {
   ParserBuilder *pb = ALLOC2(ParserBuilder);
-  // pb->root = NULL;
   map_init_default(&pb->rules);
   return pb;
 }
@@ -152,9 +166,6 @@ void parser_builder_rule(ParserBuilder *pb, const char rule_name[],
   }
   map_insert(&pb->rules, interned_rule_name, p);
 }
-
-// void parser_builder_set_root(ParserBuilder *pb, Production *p) { pb->root =
-// p; }
 
 void parser_builder_delete(ParserBuilder *pb) {
   M_iter iter = map_iter(&pb->rules);
@@ -203,6 +214,7 @@ void _print_child_function_call(const char *production_name,
     ERROR("Unexpected production type: %d.", p->type);
   }
 }
+
 const char *_production_name_with_child_suffix(const char *production_name,
                                                const Production *p,
                                                int child_index) {
@@ -333,8 +345,8 @@ void _write_rule_and_subrules(const char *production_name, const Production *p,
   fprintf(file, "}\n\n");
 }
 
-void _write_header(ParserBuilder *pb, FILE *file, const char h_file_path[],
-                   const char lexer_h_file_path[]) {
+void _write_headers(ParserBuilder *pb, FILE *file, const char h_file_path[],
+                    const char lexer_h_file_path[]) {
   // Includes.
   fprintf(file, "#include \"%s\"\n\n", h_file_path);
   fprintf(file, "#include \"lang/lexer/token.h\"\n");
@@ -346,7 +358,7 @@ void parser_builder_write_c_file(ParserBuilder *pb,
                                  TokenToStringFn token_to_str,
                                  const char h_file_path[],
                                  const char lexer_h_file_path[], FILE *file) {
-  _write_header(pb, file, h_file_path, lexer_h_file_path);
+  _write_headers(pb, file, h_file_path, lexer_h_file_path);
   M_iter rules = map_iter(&pb->rules);
   for (; has(&rules); inc(&rules)) {
     const char *production_name = (const char *)key(&rules);

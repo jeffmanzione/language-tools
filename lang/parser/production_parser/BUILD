@@ -8,14 +8,29 @@ cc_binary(
     name = "production_parser_test",
     srcs = ["production_parser_test.c"],
     deps = [
+        ":production_parser_semantics",
         ":production_rules",
         "//lang/lexer:token",
+        "//lang/parser:parser_builder",
         "//lang/parser/production_lexer",
         "//lang/semantic_analyzer",
         "//lang/semantic_analyzer:expression_tree",
         "@c_data_structures//struct:q",
         "@file_utils//util/file:file_info",
         "@memory_wrapper//alloc/arena:intern",
+    ],
+)
+
+cc_library(
+    name = "production_parser_semantics",
+    srcs = ["production_parser_semantics.c"],
+    hdrs = ["production_parser_semantics.h"],
+    deps = [
+        ":production_rules",
+        "//lang/lexer:token",
+        "//lang/parser/production_lexer",
+        "//lang/semantic_analyzer",
+        "//lang/semantic_analyzer:expression_tree",
     ],
 )
 

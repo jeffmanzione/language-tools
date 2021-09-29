@@ -55,6 +55,7 @@ void parser_delete_st(Parser *parser, SyntaxTree *st) {
       }
       parser_delete_st(parser, child);
     }
+    alist_finalize(&st->children);
   }
   if (NULL != st->token) {
     Q_push(parser->tokens, st->token);
