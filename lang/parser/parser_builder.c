@@ -25,7 +25,7 @@ typedef struct _Production {
   ProductionType type;
   union {
     AList children;
-    int token;
+    char *token;
     char *rule_name;
   };
 } Production;
@@ -91,7 +91,7 @@ Production *__and(int arg_count, ...) {
   return _production_multi(PRODUCTION_AND, arg_count, valist);
 }
 
-Production *token(int token) {
+Production *token(char token[]) {
   Production *p = _production_create(PRODUCTION_TOKEN);
   p->token = token;
   return p;
@@ -104,7 +104,7 @@ Production *optional(Production *p_child) {
   return p;
 }
 
-Production *newline() { return token(TOKEN_NEWLINE); }
+Production *newline() { return token("TOKEN_NEWLINE"); }
 
 Production *line(Production *p) {
   Production *p_parent = _production_multi(PRODUCTION_AND, 0, NULL);
@@ -122,8 +122,7 @@ Production *rule(const char rule_name[]) {
   return p;
 }
 
-void _production_print(const Production *p, TokenToStringFn token_to_str,
-                       FILE *out) {
+void _production_print(const Production *p, FILE *out) {
   switch (p->type) {
     case PRODUCTION_EPSILON:
       fprintf(out, "E");
@@ -132,7 +131,7 @@ void _production_print(const Production *p, TokenToStringFn token_to_str,
       fprintf(out, "rule:%s", p->rule_name);
       return;
     case PRODUCTION_TOKEN:
-      fprintf(out, "token:%s", token_to_str(p->token));
+      fprintf(out, "token:%s", p->token);
       return;
     default:  // pass
       break;
@@ -143,11 +142,11 @@ void _production_print(const Production *p, TokenToStringFn token_to_str,
                                 : PRODUCTION_OR == p->type ? "OR"
                                                            : "OPTIONAL";
   fprintf(out, "%s(", production_type);
-  _production_print(*(Production **)al_value(&iter), token_to_str, out);
+  _production_print(*(Production **)al_value(&iter), out);
   al_inc(&iter);
   for (; al_has(&iter); al_inc(&iter)) {
     fprintf(out, ", ");
-    _production_print(*(Production **)al_value(&iter), token_to_str, out);
+    _production_print(*(Production **)al_value(&iter), out);
   }
   fprintf(out, ")");
 }
@@ -294,8 +293,7 @@ void _write_or_body(const char *production_name, const Production *p,
 }
 
 void _write_rule_and_subrules(const char *production_name, const Production *p,
-                              TokenToStringFn token_to_str, bool is_named_rule,
-                              FILE *file) {
+                              bool is_named_rule, FILE *file) {
   if (PRODUCTION_AND == p->type || PRODUCTION_OR == p->type) {
     int child_index = -1;
     AL_iter children = alist_iter(&p->children);
@@ -308,7 +306,7 @@ void _write_rule_and_subrules(const char *production_name, const Production *p,
       }
       _write_rule_and_subrules(_production_name_with_child_suffix(
                                    production_name, p_child, child_index),
-                               p_child, token_to_str, false, file);
+                               p_child, false, file);
     }
   }
   if (PRODUCTION_OPTIONAL == p->type) {
@@ -323,15 +321,13 @@ void _write_rule_and_subrules(const char *production_name, const Production *p,
     _write_or_body(production_name, p, file);
   } else if (PRODUCTION_OPTIONAL == p->type) {
     fprintf(file, "  Token *token = parser_next(parser);\n");
-    fprintf(file, "  if (NULL == token || %s != token->type) {\n",
-            token_to_str(p->token));
+    fprintf(file, "  if (NULL == token || %s != token->type) {\n", p->token);
     fprintf(file, "    return &NO_MATCH;\n  }\n");
     fprintf(file, "  return match(parser, rule_%s, \"%s\");\n", production_name,
             production_name);
   } else if (PRODUCTION_TOKEN == p->type) {
     fprintf(file, "  Token *token = parser_next(parser);\n");
-    fprintf(file, "  if (NULL == token || %s != token->type) {\n",
-            token_to_str(p->token));
+    fprintf(file, "  if (NULL == token || %s != token->type) {\n", p->token);
     fprintf(file, "    return &NO_MATCH;\n  }\n");
     fprintf(file, "  return match(parser, rule_%s, \"%s\");\n", production_name,
             production_name);
@@ -354,21 +350,18 @@ void _write_headers(ParserBuilder *pb, FILE *file, const char h_file_path[],
   fprintf(file, "\n");
 }
 
-void parser_builder_write_c_file(ParserBuilder *pb,
-                                 TokenToStringFn token_to_str,
-                                 const char h_file_path[],
+void parser_builder_write_c_file(ParserBuilder *pb, const char h_file_path[],
                                  const char lexer_h_file_path[], FILE *file) {
   _write_headers(pb, file, h_file_path, lexer_h_file_path);
   M_iter rules = map_iter(&pb->rules);
   for (; has(&rules); inc(&rules)) {
     const char *production_name = (const char *)key(&rules);
     const Production *p = (Production *)value(&rules);
-    _write_rule_and_subrules(production_name, p, token_to_str, true, file);
+    _write_rule_and_subrules(production_name, p, true, file);
   }
 }
 
-void parser_builder_write_h_file(ParserBuilder *pb,
-                                 TokenToStringFn token_to_str, FILE *file) {
+void parser_builder_write_h_file(ParserBuilder *pb, FILE *file) {
   fprintf(file, "#ifndef LANGUAGE_TOOLS_LANG_PARSER_TODO_THIS_H_\n");
   fprintf(file, "#define LANGUAGE_TOOLS_LANG_PARSER_TODO_THIS_H_\n\n");
   fprintf(file, "#include \"lang/parser/parser.h\"\n");
@@ -379,7 +372,7 @@ void parser_builder_write_h_file(ParserBuilder *pb,
     const Production *p = (const Production *)value(&rules);
 
     fprintf(file, "// %s -> ", production_name);
-    _production_print(p, token_to_str, file);
+    _production_print(p, file);
     fprintf(file, ";\n");
 
     _write_rule_signature(production_name, p, true, file);
@@ -388,12 +381,11 @@ void parser_builder_write_h_file(ParserBuilder *pb,
   fprintf(file, "\n#endif /* LANGUAGE_TOOLS_LANG_PARSER_TODO_THIS_H_ */\n");
 }
 
-void parser_builder_print(ParserBuilder *pb, TokenToStringFn token_to_string,
-                          FILE *out) {
+void parser_builder_print(ParserBuilder *pb, FILE *out) {
   M_iter iter = map_iter(&pb->rules);
   for (; has(&iter); inc(&iter)) {
     fprintf(out, "%s -> ", (char *)key(&iter));
-    _production_print((Production *)value(&iter), token_to_string, out);
+    _production_print((Production *)value(&iter), out);
     fprintf(out, ";\n");
   }
 }

@@ -41,3 +41,9 @@ cc_binary(
         "@memory_wrapper//alloc/arena:intern",
     ],
 )
+
+# parser_builder(
+#     name = "test_parser",
+#     lexer = "//lang/lexer:test_lexer",
+#     rules = "testdata/rules.txt",
+# )

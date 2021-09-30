@@ -15,7 +15,7 @@ Production *_produce_production(const ExpressionTree *etree) {
   }
   if (IS_EXPRESSION(etree, token)) {
     Expression_token *t = EXTRACT_EXPRESSION(etree, token);
-    return token(token_name_to_token_type(t->token_type));
+    return token(t->token_type);
   }
   if (IS_EXPRESSION(etree, rule)) {
     Expression_rule *r = EXTRACT_EXPRESSION(etree, rule);
@@ -55,7 +55,6 @@ void _produce_parser_builder(ParserBuilder *pb, const ExpressionTree *etree) {
     parser_builder_rule(pb, rule->rule_name,
                         _produce_production(rule->expression));
   }
-  parser_builder_print(pb, (TokenToStringFn)token_type_to_name, stdout);
 }
 
 int main(int argc, const char *argv[]) {
@@ -66,6 +65,7 @@ int main(int argc, const char *argv[]) {
   Q_init(&tokens);
 
   FileInfo *fi = file_info(argv[1]);
+  const bool header = 0 == strcmp("header", argv[2]);
   lexer_tokenize(fi, &tokens);
 
   // Q_iter iter = Q_iterator(&tokens);
@@ -86,9 +86,19 @@ int main(int argc, const char *argv[]) {
 
   ExpressionTree *etree = semantic_analyzer_populate(&analyzer, productions);
 
-  ParserBuilder *pb = parser_builder_create();
+  ParserBuilder *pb =
+      parser_builder_create((TokenToStringFn)token_type_to_name,
+                            (StringToTokenFn)token_name_to_token_type);
 
   _produce_parser_builder(pb, etree);
+
+  if (header) {
+    parser_builder_write_h_file(pb, stdout);
+  } else {
+    const char *h_file = intern(argv[3]);
+    const char *lexer_h_file = intern(argv[4]);
+    parser_builder_write_c_file(pb, h_file, lexer_h_file, stdout);
+  }
 
   parser_builder_delete(pb);
 

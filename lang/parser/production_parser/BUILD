@@ -5,8 +5,8 @@ package(
 )
 
 cc_binary(
-    name = "production_parser_test",
-    srcs = ["production_parser_test.c"],
+    name = "production_parser_main",
+    srcs = ["production_parser_main.c"],
     deps = [
         ":production_parser_semantics",
         ":production_rules",
