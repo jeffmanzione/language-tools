@@ -68,18 +68,10 @@ int main(int argc, const char *argv[]) {
   const bool header = 0 == strcmp("header", argv[2]);
   lexer_tokenize(fi, &tokens);
 
-  // Q_iter iter = Q_iterator(&tokens);
-  // for (; Q_has(&iter); Q_inc(&iter)) {
-  //   Token *token = *((Token **)Q_value(&iter));
-  //   printf("token %s '%s'\n", token_type_to_name(token->type), token->text);
-  //   fflush(stdout);
-  // }
-
   Parser parser;
   parser_init(&parser, rule_production_rule_set);
 
   SyntaxTree *productions = parser_parse(&parser, &tokens);
-  // syntax_tree_print(productions, 0, stdout);
 
   SemanticAnalyzer analyzer;
   semantic_analyzer_init(&analyzer, production_parser_init_semantics);
