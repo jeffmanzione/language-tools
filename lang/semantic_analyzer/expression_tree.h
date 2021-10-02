@@ -16,7 +16,7 @@ typedef struct {
   void *expression;
 } ExpressionTree;
 
-#define DefineExpression(name)                                           \
+#define DEFINE_EXPRESSION(name)                                          \
   typedef struct _Expression_##name Expression_##name;                   \
   ExpressionTree *Populate_##name(const SyntaxTree *tree,                \
                                   SemanticAnalyzer *analyzer);           \
@@ -27,7 +27,7 @@ typedef struct {
                              SemanticAnalyzer *analyzer);                \
   struct _Expression_##name
 
-#define ImplPopulate(name, stree_input, analyzer_input)          \
+#define POPULATE_IMPL(name, stree_input, analyzer_input)         \
   ExpressionTree *Populate_##name(stree_input, analyzer_input) { \
     ExpressionTree *etree = ALLOC2(ExpressionTree);              \
     etree->type = rule_##name;                                   \
@@ -38,13 +38,13 @@ typedef struct {
   }                                                              \
   void Transform_##name(stree_input, Expression_##name *name, analyzer_input)
 
-#define ImplDelete(name, analyzer_input)                     \
+#define DELETE_IMPL(name, analyzer_input)                    \
   void Delete_##name(ExpressionTree *tree, analyzer_input) { \
     Delete_##name##_inner(tree->expression, analyzer);       \
   }                                                          \
   void Delete_##name##_inner(Expression_##name *name, analyzer_input)
 
-#define Register(name)                                    \
+#define REGISTER_EXPRESSION(name)                         \
   {                                                       \
     map_insert(populators, rule_##name, Populate_##name); \
     map_insert(deleters, rule_##name, Delete_##name);     \

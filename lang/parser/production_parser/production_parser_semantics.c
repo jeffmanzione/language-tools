@@ -1,10 +1,10 @@
 #include "lang/parser/production_parser/production_parser_semantics.h"
 
-ImplPopulate(epsilon, const SyntaxTree *stree, SemanticAnalyzer *analyzer) {}
+POPULATE_IMPL(epsilon, const SyntaxTree *stree, SemanticAnalyzer *analyzer) {}
 
-ImplDelete(epsilon, SemanticAnalyzer *analyzer) {}
+DELETE_IMPL(epsilon, SemanticAnalyzer *analyzer) {}
 
-ImplPopulate(token, const SyntaxTree *stree, SemanticAnalyzer *analyzer) {
+POPULATE_IMPL(token, const SyntaxTree *stree, SemanticAnalyzer *analyzer) {
   const SyntaxTree *tok = CHILD_SYNTAX_AT(stree, 2);
   if (!IS_TOKEN(tok)) {
     ERROR("Rule token must have a token.");
@@ -12,9 +12,9 @@ ImplPopulate(token, const SyntaxTree *stree, SemanticAnalyzer *analyzer) {
   token->token_type = tok->token->text;
 }
 
-ImplDelete(token, SemanticAnalyzer *analyzer) {}
+DELETE_IMPL(token, SemanticAnalyzer *analyzer) {}
 
-ImplPopulate(rule, const SyntaxTree *stree, SemanticAnalyzer *analyzer) {
+POPULATE_IMPL(rule, const SyntaxTree *stree, SemanticAnalyzer *analyzer) {
   const SyntaxTree *rule_name = CHILD_SYNTAX_AT(stree, 2);
   if (!IS_TOKEN(rule_name)) {
     ERROR("Rule rule must have a rule_name.");
@@ -22,7 +22,7 @@ ImplPopulate(rule, const SyntaxTree *stree, SemanticAnalyzer *analyzer) {
   rule->rule_name = rule_name->token->text;
 }
 
-ImplDelete(rule, SemanticAnalyzer *analyzer) {}
+DELETE_IMPL(rule, SemanticAnalyzer *analyzer) {}
 
 _populate_list1(SemanticAnalyzer *analyzer, const SyntaxTree *list1,
                 AList *expressions) {
@@ -50,12 +50,12 @@ void _populate_list(SemanticAnalyzer *analyzer, const SyntaxTree *child_list,
   _populate_list1(analyzer, tail, expressions);
 }
 
-ImplPopulate(and, const SyntaxTree *stree, SemanticAnalyzer *analyzer) {
+POPULATE_IMPL(and, const SyntaxTree *stree, SemanticAnalyzer *analyzer) {
   const SyntaxTree *child_list = CHILD_SYNTAX_AT(stree, 2);
   _populate_list(analyzer, child_list, &and->expressions);
 }
 
-ImplDelete(and, SemanticAnalyzer *analyzer) {
+DELETE_IMPL(and, SemanticAnalyzer *analyzer) {
   AL_iter expressions = alist_iter(&and->expressions);
   for (; al_has(&expressions); al_inc(&expressions)) {
     ExpressionTree *etree = *(ExpressionTree **)al_value(&expressions);
@@ -64,12 +64,12 @@ ImplDelete(and, SemanticAnalyzer *analyzer) {
   alist_finalize(&and->expressions);
 }
 
-ImplPopulate(or, const SyntaxTree *stree, SemanticAnalyzer *analyzer) {
+POPULATE_IMPL(or, const SyntaxTree *stree, SemanticAnalyzer *analyzer) {
   const SyntaxTree *child_list = CHILD_SYNTAX_AT(stree, 2);
   _populate_list(analyzer, child_list, & or->expressions);
 }
 
-ImplDelete(or, SemanticAnalyzer *analyzer) {
+DELETE_IMPL(or, SemanticAnalyzer *analyzer) {
   AL_iter expressions = alist_iter(& or->expressions);
   for (; al_has(&expressions); al_inc(&expressions)) {
     ExpressionTree *etree = *(ExpressionTree **)al_value(&expressions);
@@ -78,17 +78,17 @@ ImplDelete(or, SemanticAnalyzer *analyzer) {
   alist_finalize(& or->expressions);
 }
 
-ImplPopulate(optional, const SyntaxTree *stree, SemanticAnalyzer *analyzer) {
+POPULATE_IMPL(optional, const SyntaxTree *stree, SemanticAnalyzer *analyzer) {
   const SyntaxTree *exp = CHILD_SYNTAX_AT(stree, 2);
   optional->expression = semantic_analyzer_populate(analyzer, exp);
 }
 
-ImplDelete(optional, SemanticAnalyzer *analyzer) {
+DELETE_IMPL(optional, SemanticAnalyzer *analyzer) {
   semantic_analyzer_delete(analyzer, optional->expression);
 }
 
-ImplPopulate(production_rule, const SyntaxTree *stree,
-             SemanticAnalyzer *analyzer) {
+POPULATE_IMPL(production_rule, const SyntaxTree *stree,
+              SemanticAnalyzer *analyzer) {
   if (3 != alist_len(&stree->children)) {
     ERROR("Rule production_rule must have 3 children.");
   }
@@ -106,7 +106,7 @@ ImplPopulate(production_rule, const SyntaxTree *stree,
       semantic_analyzer_populate(analyzer, expression);
 }
 
-ImplDelete(production_rule, SemanticAnalyzer *analyzer) {
+DELETE_IMPL(production_rule, SemanticAnalyzer *analyzer) {
   if (NULL != production_rule->expression) {
     semantic_analyzer_delete(analyzer, production_rule->expression);
   }
@@ -127,8 +127,8 @@ void _populate_production_rule_set1(SemanticAnalyzer *analyzer,
   }
 }
 
-ImplPopulate(production_rule_set, const SyntaxTree *stree,
-             SemanticAnalyzer *analyzer) {
+POPULATE_IMPL(production_rule_set, const SyntaxTree *stree,
+              SemanticAnalyzer *analyzer) {
   alist_init(&production_rule_set->rules, ExpressionTree *, DEFAULT_ARRAY_SZ);
   const SyntaxTree *first = CHILD_SYNTAX_AT(stree, 0);
   ExpressionTree *first_rule = semantic_analyzer_populate(analyzer, first);
@@ -139,7 +139,7 @@ ImplPopulate(production_rule_set, const SyntaxTree *stree,
   }
 }
 
-ImplDelete(production_rule_set, SemanticAnalyzer *analyzer) {
+DELETE_IMPL(production_rule_set, SemanticAnalyzer *analyzer) {
   AL_iter iter = alist_iter(&production_rule_set->rules);
   for (; al_has(&iter); al_inc(&iter)) {
     semantic_analyzer_delete(analyzer, *(ExpressionTree **)al_value(&iter));
@@ -148,12 +148,12 @@ ImplDelete(production_rule_set, SemanticAnalyzer *analyzer) {
 }
 
 void production_parser_init_semantics(Map *populators, Map *deleters) {
-  Register(epsilon);
-  Register(token);
-  Register(rule);
-  Register(and);
-  Register(or);
-  Register(optional);
-  Register(production_rule);
-  Register(production_rule_set);
+  REGISTER_EXPRESSION(epsilon);
+  REGISTER_EXPRESSION(token);
+  REGISTER_EXPRESSION(rule);
+  REGISTER_EXPRESSION(and);
+  REGISTER_EXPRESSION(or);
+  REGISTER_EXPRESSION(optional);
+  REGISTER_EXPRESSION(production_rule);
+  REGISTER_EXPRESSION(production_rule_set);
 }

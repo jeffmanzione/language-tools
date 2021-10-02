@@ -8,24 +8,24 @@
 #include "lang/semantic_analyzer/semantic_analyzer.h"
 #include "struct/q.h"
 
-DefineExpression(epsilon) { char nan; };
+DEFINE_EXPRESSION(epsilon) { char nan; };
 
-DefineExpression(token) { const char *token_type; };
+DEFINE_EXPRESSION(token) { const char *token_type; };
 
-DefineExpression(rule) { const char *rule_name; };
+DEFINE_EXPRESSION(rule) { const char *rule_name; };
 
-DefineExpression(and) { AList expressions; };
+DEFINE_EXPRESSION(and) { AList expressions; };
 
-DefineExpression(or) { AList expressions; };
+DEFINE_EXPRESSION(or) { AList expressions; };
 
-DefineExpression(optional) { ExpressionTree *expression; };
+DEFINE_EXPRESSION(optional) { ExpressionTree *expression; };
 
-DefineExpression(production_rule) {
+DEFINE_EXPRESSION(production_rule) {
   const char *rule_name;
   ExpressionTree *expression;
 };
 
-DefineExpression(production_rule_set) { AList rules; };
+DEFINE_EXPRESSION(production_rule_set) { AList rules; };
 
 void production_parser_init_semantics(Map *populators, Map *deleters);
 
