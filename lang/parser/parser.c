@@ -74,6 +74,16 @@ void syntax_tree_add_child(SyntaxTree *st, SyntaxTree *child) {
   alist_append(&st->children, &child);
 }
 
+SyntaxTree *parser_prune_st(Parser *p, SyntaxTree *st) {
+  if (!st->has_children || alist_len(&st->children) > 1) {
+    return st;
+  }
+  SyntaxTree *child = *(SyntaxTree **)alist_get(&st->children, 0);
+  alist_remove_last(&st->children);
+  parser_delete_st(p, st);
+  return child;
+}
+
 SyntaxTree *match(Parser *parser, RuleFn rule_fn,
                   const char production_name[]) {
   SyntaxTree *st = parser_create_st(parser, rule_fn, production_name);

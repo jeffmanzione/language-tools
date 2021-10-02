@@ -1,47 +1,42 @@
+#include "lang/parser/parser.h"
+
 #include "alloc/alloc.h"
 #include "alloc/arena/intern.h"
 #include "lang/lexer/test_lexer.h"
-#include "lang/parser/parser_builder.h"
+#include "lang/lexer/token.h"
+#include "lang/parser/test_parser.h"
+#include "struct/q.h"
+#include "util/file/file_info.h"
+#include "util/file/sfile.h"
 
 int main(int argc, const char *args[]) {
   alloc_init();
   intern_init();
 
-  ParserBuilder *pb = parser_builder_create();
+  const char test[] = "7 and (a, (cat or dog))";
+  Q tokens;
+  Q_init(&tokens);
 
-  parser_builder_rule(pb, "identifier", token(TOKEN_WORD));
-  parser_builder_rule(pb, "constant",
-                      or2(token(TOKEN_INTEGER), token(TOKEN_FLOATING)));
-  parser_builder_rule(pb, "string_literal", token(TOKEN_STRING));
-  parser_builder_rule(pb, "array_declaration",
-                      or2(and2(token(SYMBOL_LBRACKET), token(SYMBOL_RBRACKET)),
-                          and3(token(SYMBOL_RBRACKET), rule("tuple_expression"),
-                               token(SYMBOL_RBRACKET))));
-  parser_builder_rule(
-      pb, "primary_expression",
-      or4(rule("identifier"), rule("constant"), rule("string_literal"),
-          and3(token(SYMBOL_LPAREN), rule("tuple_expression"),
-               token(SYMBOL_RPAREN))));
-  parser_builder_rule(pb, "and1",
-                      or2(and2(token(KEYWORD_AND), rule("and")), epsilon()));
-  parser_builder_rule(pb, "and",
-                      and2(rule("primary_expression"), rule("and1")));
-  parser_builder_rule(pb, "or1",
-                      or2(and2(token(KEYWORD_OR), rule("or")), epsilon()));
-  parser_builder_rule(pb, "or", and2(rule("and"), rule("or1")));
-  parser_builder_rule(
-      pb, "tuple_expression1",
-      or2(and3(token(SYMBOL_COMMA), rule("or"), rule("tuple_expression1")),
-          epsilon()));
-  parser_builder_rule(pb, "tuple_expression",
-                      and2(rule("or"), rule("tuple_expression1")));
+  SFILE *sfile = sfile_open(test);
+  FileInfo *fi = file_info_sfile(sfile);
+  lexer_tokenize(fi, &tokens);
 
-  //   parser_builder_set_root(pb, rule("tuple_expression"));
+  //   Q_iter iter = Q_iterator(&tokens);
+  //   for (; Q_has(&iter); Q_inc(&iter)) {
+  //     Token *token = *((Token **)Q_value(&iter));
+  //     printf("token %d '%s'\n", token->type, token->text);
+  //   }
 
-  parser_builder_write_h_file(pb, (TokenToStringFn)token_type_to_name, stdout);
-  parser_builder_write_c_file(pb, (TokenToStringFn)token_type_to_name, stdout);
+  Parser parser;
+  parser_init(&parser, rule_tuple_expression);
 
-  parser_builder_delete(pb);
+  const SyntaxTree *stree = parser_parse(&parser, &tokens);
+  syntax_tree_print(stree, 0, stdout);
+  printf("\n");
+
+  parser_finalize(&parser);
+
+  Q_finalize(&tokens);
 
   intern_finalize();
   alloc_finalize();

@@ -25,7 +25,7 @@ typedef struct _Production {
   ProductionType type;
   union {
     AList children;
-    char *token;
+    const char *token;
     char *rule_name;
   };
 } Production;
@@ -91,7 +91,7 @@ Production *__and(int arg_count, ...) {
   return _production_multi(PRODUCTION_AND, arg_count, valist);
 }
 
-Production *token(char token[]) {
+Production *token(const char token[]) {
   Production *p = _production_create(PRODUCTION_TOKEN);
   p->token = token;
   return p;
@@ -267,7 +267,8 @@ void _write_and_body(const char *production_name, const Production *p,
   fprintf(file, "  if (!st->has_children) {\n");
   fprintf(file, "    parser_delete_st(parser, st);\n");
   fprintf(file, "    return &NO_MATCH;\n  }\n");
-  fprintf(file, "  st->matched = true;\n  return st;\n");
+  fprintf(file,
+          "  st->matched = true;\n  return parser_prune_st(parser, st);\n");
 }
 
 void _write_or_body(const char *production_name, const Production *p,
@@ -329,8 +330,15 @@ void _write_rule_and_subrules(const char *production_name, const Production *p,
     fprintf(file, "  Token *token = parser_next(parser);\n");
     fprintf(file, "  if (NULL == token || %s != token->type) {\n", p->token);
     fprintf(file, "    return &NO_MATCH;\n  }\n");
-    fprintf(file, "  return match(parser, rule_%s, \"%s\");\n", production_name,
-            production_name);
+    if (0 == strncmp("__token",
+                     production_name + strlen(production_name) -
+                         strlen("__token") - 1,
+                     strlen("__token"))) {
+      fprintf(file, "  return match(parser, NULL, NULL);\n");
+    } else {
+      fprintf(file, "  return match(parser, rule_%s, \"%s\");\n",
+              production_name, production_name);
+    }
   } else if (PRODUCTION_RULE == p->type) {
     fprintf(file, "  return rule_%s(parser);\n", p->rule_name);
   } else if (PRODUCTION_EPSILON == p->type) {

@@ -66,6 +66,8 @@ int main(int argc, const char *argv[]) {
 
   FileInfo *fi = file_info(argv[1]);
   const bool header = 0 == strcmp("header", argv[2]);
+  FILE *out_file = fopen(argv[3], "w");
+
   lexer_tokenize(fi, &tokens);
 
   Parser parser;
@@ -85,11 +87,11 @@ int main(int argc, const char *argv[]) {
   _produce_parser_builder(pb, etree);
 
   if (header) {
-    parser_builder_write_h_file(pb, stdout);
+    parser_builder_write_h_file(pb, out_file);
   } else {
-    const char *h_file = intern(argv[3]);
-    const char *lexer_h_file = intern(argv[4]);
-    parser_builder_write_c_file(pb, h_file, lexer_h_file, stdout);
+    const char *h_file = intern(argv[4]);
+    const char *lexer_h_file = intern(argv[5]);
+    parser_builder_write_c_file(pb, h_file, lexer_h_file, out_file);
   }
 
   parser_builder_delete(pb);
@@ -103,6 +105,8 @@ int main(int argc, const char *argv[]) {
   Q_finalize(&tokens);
 
   file_info_delete(fi);
+
+  fclose(out_file);
 
   token_finalize_all();
   intern_finalize();

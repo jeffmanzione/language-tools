@@ -35,6 +35,7 @@ Token *parser_next(Parser *parser);
 SyntaxTree *parser_create_st(Parser *parser, RuleFn rule_fn,
                              const char production_name[]);
 void parser_delete_st(Parser *parser, SyntaxTree *st);
+SyntaxTree *parser_prune_st(Parser *p, SyntaxTree *st);
 void syntax_tree_add_child(SyntaxTree *st, SyntaxTree *child);
 SyntaxTree *match(Parser *parser, RuleFn rule_fn, const char production_name[]);
 void syntax_tree_print(const SyntaxTree *st, int level, FILE *out);

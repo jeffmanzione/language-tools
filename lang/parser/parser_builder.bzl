@@ -3,8 +3,8 @@ def _parser_builder_impl(ctx):
     parser_builder_output = ctx.actions.declare_file(out_file_name)
     program_config = "header" if ctx.attr.header else "source"
     args = ctx.actions.args()
-    args.add_all([ctx.file.rules, program_config])
-    if ctx.attr.header:
+    args.add_all([ctx.file.rules, program_config, parser_builder_output])
+    if not ctx.attr.header:
         h_file = out_file_name.replace(".c", ".h")
         lexer_h_file = "%s/%s.h" % (ctx.attr.lexer.label.package, ctx.attr.lexer.label.name)
         args.add_all([h_file, lexer_h_file])
@@ -60,5 +60,7 @@ def parser_builder(name, rules, lexer):
         srcs = [":%s_c" % name],
         deps = [
             lexer,
+            "//lang/parser",
+            "@c_data_structures//struct:alist",
         ],
     )
