@@ -9,34 +9,41 @@
 #include "util/file/file_info.h"
 #include "util/file/sfile.h"
 
+#define BUFFER_SIZE 256
+
 int main(int argc, const char *args[]) {
   alloc_init();
   intern_init();
 
-  const char test[] = "7 and (a, (cat or dog))";
-  Q tokens;
-  Q_init(&tokens);
+  FileInfo *fi = file_info_file(stdin);
 
-  SFILE *sfile = sfile_open(test);
-  FileInfo *fi = file_info_sfile(sfile);
-  lexer_tokenize(fi, &tokens);
+  while (true) {
+    Q tokens;
+    Q_init(&tokens);
 
-  //   Q_iter iter = Q_iterator(&tokens);
-  //   for (; Q_has(&iter); Q_inc(&iter)) {
-  //     Token *token = *((Token **)Q_value(&iter));
-  //     printf("token %d '%s'\n", token->type, token->text);
-  //   }
+    printf("> ");
 
-  Parser parser;
-  parser_init(&parser, rule_tuple_expression);
+    lexer_tokenize_line(fi, &tokens);
 
-  const SyntaxTree *stree = parser_parse(&parser, &tokens);
-  syntax_tree_print(stree, 0, stdout);
-  printf("\n");
+    Parser parser;
+    parser_init(&parser, rule_tuple_expression);
 
-  parser_finalize(&parser);
+    const SyntaxTree *stree = parser_parse(&parser, &tokens);
+    syntax_tree_print(stree, 0, stdout);
+    printf("\n");
 
-  Q_finalize(&tokens);
+    Q_iter iter = Q_iterator(&tokens);
+    for (; Q_has(&iter); Q_inc(&iter)) {
+      Token *token = *((Token **)Q_value(&iter));
+      if (token->type != TOKEN_NEWLINE) {
+        printf("EXTRA TOKEN %d '%s'\n", token->type, token->text);
+      }
+    }
+
+    parser_finalize(&parser);
+
+    Q_finalize(&tokens);
+  }
 
   intern_finalize();
   alloc_finalize();

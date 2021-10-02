@@ -304,7 +304,7 @@ void _write_switch_for_keyword_resolve(_Trie *trie, int index, FILE *file) {
 }
 
 void _write_resolve_type(LexerBuilder *lb, FILE *file) {
-  fprintf(file, "TokenType symbol_type(const char word[]) {\n");
+  fprintf(file, "TokenType symbol_token_type(const char word[]) {\n");
   _write_switch_for_symbol_resolve(lb->symbols_trie, 1, file);
   fprintf(file, "  return TOKENTYPE_UNKNOWN;\n");
   fprintf(file, "}\n\n");
@@ -315,7 +315,7 @@ void _write_resolve_type(LexerBuilder *lb, FILE *file) {
   fprintf(file, "}\n\n");
 
   fprintf(file, "TokenType resolve_type(const char word[], int word_len) {\n");
-  fprintf(file, "  TokenType type = symbol_type(word);\n");
+  fprintf(file, "  TokenType type = symbol_token_type(word);\n");
   fprintf(file,
           "  if (TOKENTYPE_UNKNOWN == type) { type = _keyword_type(word, "
           "word_len); }\n");
@@ -391,7 +391,7 @@ const char _TOKENIZE_FUNCTIONS_TEXT[] =
 \n\
 inline int _tokenize_symbol(const LineInfo *li, Q *tokens, int col_num) {\n\
   char *line = li->line_text;\n\
-  TokenType type = symbol_type(line + col_num);\n\
+  TokenType type = symbol_token_type(line + col_num);\n\
   if (TOKENTYPE_UNKNOWN == type) {\n\
     ERROR(\"UNKNOWN TOKEN\");\n\
   }\n\
@@ -525,6 +525,15 @@ bool _lexer_tokenize_line(FileInfo *fi, Q *tokens, bool *in_comment, bool *in_st
   return true;\n\
 }\n\
 \n\
+void lexer_tokenize_line(FileInfo *file, Q *tokens) {\n\
+  ASSERT(NOT_NULL(file), NOT_NULL(tokens));\n\
+  bool in_comment = false;\n\
+  const char *comment_end = NULL;\n\
+  bool in_string = false;\n\
+  const char *string_end = NULL;\n\
+  char *string_buffer = NULL;\n\
+  _lexer_tokenize_line(file, tokens, &in_comment,&in_string, &comment_end, &string_end, &string_buffer);\n\
+}\n\
 void lexer_tokenize(FileInfo *file, Q *tokens) {\n\
   ASSERT(NOT_NULL(file), NOT_NULL(tokens));\n\
   bool in_comment = false;\n\
@@ -556,7 +565,7 @@ void lexer_builder_write_h_file(LexerBuilder *lb, FILE *file) {
   fprintf(file, "#include \"util/file/file_info.h\"\n");
   fprintf(file, "#include \"struct/q.h\"\n\n");
   _write_token_type_enum(lb, file);
-  fprintf(file, "TokenType symbol_type(const char word[]);\n");
+  fprintf(file, "TokenType symbol_token_type(const char word[]);\n");
   fprintf(file, "const char *token_type_to_str(TokenType token_type);\n");
   fprintf(file, "const char *token_type_to_name(TokenType token_type);\n");
   fprintf(file, "TokenType token_name_to_token_type(const char str[]);\n");
@@ -564,6 +573,7 @@ void lexer_builder_write_h_file(LexerBuilder *lb, FILE *file) {
   fprintf(file, "bool is_start_of_symbol(const char word[]);\n");
   fprintf(file, "const char *is_start_of_comment(const char word[]);\n");
   fprintf(file, "const char *is_start_of_string(const char word[]);\n");
+  fprintf(file, "void lexer_tokenize_line(FileInfo *file, Q *tokens);\n");
   fprintf(file, "void lexer_tokenize(FileInfo *file, Q *tokens);\n");
   fprintf(file, "\n#endif /* LANG_LEXER_CUSTOM_LEXER_H_ */\n");
 }
