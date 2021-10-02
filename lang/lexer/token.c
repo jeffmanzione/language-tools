@@ -17,8 +17,8 @@ void token_fill(Token *tok, int type, int line, int col, const char text[],
   tok->text = intern_range(text, 0, text_len);
 }
 
-inline Token *token_create(int type, int line, int col, const char text[],
-                           int text_len) {
+Token *token_create(int type, int line, int col, const char text[],
+                    int text_len) {
   if (!__ARENA__Token.inited) {
     ARENA_INIT(Token);
     __ARENA__Token.inited = true;
@@ -28,7 +28,7 @@ inline Token *token_create(int type, int line, int col, const char text[],
   return tok;
 }
 
-inline void token_delete(Token *token) {
+void token_delete(Token *token) {
   ASSERT_NOT_NULL(token);
   ARENA_DEALLOC(Token, token);
 }

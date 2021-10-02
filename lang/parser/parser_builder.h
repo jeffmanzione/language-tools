@@ -4,14 +4,18 @@
 #include <stdio.h>
 
 typedef struct _ParserBuilder ParserBuilder;
-typedef struct _ProductionBuilder ProductionBuilder;
+typedef struct _Production Production;
+typedef const char *(*TokenToStringFn)(int);
+typedef int (*StringToTokenFn)(const char *);
 
 ParserBuilder *parser_builder_create();
 void parser_builder_delete(ParserBuilder *pb);
-void parser_builder_write_c_file(ParserBuilder *pb, FILE *file);
+void parser_builder_write_c_file(ParserBuilder *pb, const char h_file_path[],
+                                 const char lexer_h_file_path[], FILE *file);
 void parser_builder_write_h_file(ParserBuilder *pb, FILE *file);
-
-void production_builder_delete(ProductionBuilder *pb);
+void parser_builder_set_root(ParserBuilder *pb, Production *p);
+void parser_builder_rule(ParserBuilder *pb, const char rule_name[],
+                         Production *p);
 
 // clang-format off
 #define GET_FUNC(_1, _2, _3, _4, _5, _6, _7, _8, _9, NAME, ...) NAME
@@ -42,7 +46,20 @@ void production_builder_delete(ProductionBuilder *pb);
       (__VA_ARGS__)
 // clang-format on
 
-void __or(int arg_count, ...);
-void __and(int arg_count, ...);
+Production *__or(int arg_count, ...);
+Production *__and(int arg_count, ...);
+
+Production *rule(const char rule_name[]);
+Production *token(const char token[]);
+Production *newline();
+Production *optional(Production *p_child);
+Production *line(Production *p);
+Production *epsilon();
+
+Production *production_and();
+Production *production_or();
+void production_add_child(Production *parent, Production *child);
+
+void parser_builder_print(ParserBuilder *pb, FILE *out);
 
 #endif /* LANGUAGE_TOOLS_LANG_PARSER_PARSER_BUILDER_H_ */
