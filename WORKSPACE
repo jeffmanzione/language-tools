@@ -17,3 +17,8 @@ git_repository(
     branch = "main",
     remote = "https://github.com/jeffreymanzione/file-utils.git",
 )
+
+local_repository(
+    name = "language_tools",
+    path = "C:/users/jeffr/git/language-tools/",
+)
