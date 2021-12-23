@@ -23,12 +23,13 @@ struct _Parser {
   __Arena st_arena;
   RuleFn root;
   Q *tokens;
+  bool ignore_newline;
 };
 
 extern SyntaxTree NO_MATCH;
 extern SyntaxTree MATCH_EPSILON;
 
-void parser_init(Parser *parser, RuleFn root);
+void parser_init(Parser *parser, RuleFn root, bool ignore_newline);
 SyntaxTree *parser_parse(Parser *parser, Q *tokens);
 void parser_finalize(Parser *parser);
 Token *parser_next(Parser *parser);
