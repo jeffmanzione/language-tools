@@ -21,6 +21,10 @@ Production *_produce_production(const ExpressionTree *etree) {
     Expression_rule *r = EXTRACT_EXPRESSION(etree, rule);
     return rule(r->rule_name);
   }
+  if (IS_EXPRESSION(etree, optional)) {
+    Expression_optional *o = EXTRACT_EXPRESSION(etree, optional);
+    return optional(_produce_production(o->expression));
+  }
   if (IS_EXPRESSION(etree, and)) {
     Expression_and *a = EXTRACT_EXPRESSION(etree, and);
     Production *p = production_and();
@@ -71,9 +75,17 @@ int main(int argc, const char *argv[]) {
   lexer_tokenize(fi, &tokens);
 
   Parser parser;
-  parser_init(&parser, rule_production_rule_set);
+  parser_init(&parser, rule_production_rule_set, /*ignore_newline=*/true);
 
   SyntaxTree *productions = parser_parse(&parser, &tokens);
+
+  if (Q_size(&tokens) > 0) {
+    Q_iter iter = Q_iterator(&tokens);
+    for (; Q_has(&iter); Q_inc(&iter)) {
+      printf("  '%s'\n", (*((Token **)Q_value(&iter)))->text);
+    }
+    ERROR("EXTRA TOKENS NOT PARSED.");
+  }
 
   SemanticAnalyzer analyzer;
   semantic_analyzer_init(&analyzer, production_parser_init_semantics);

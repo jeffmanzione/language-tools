@@ -89,8 +89,9 @@ DELETE_IMPL(optional, SemanticAnalyzer *analyzer) {
 
 POPULATE_IMPL(production_rule, const SyntaxTree *stree,
               SemanticAnalyzer *analyzer) {
-  if (3 != alist_len(&stree->children)) {
-    ERROR("Rule production_rule must have 3 children.");
+  if (alist_len(&stree->children) < 3) {
+    ERROR("Rule production_rule must have 3 children, was %d",
+          alist_len(&stree->children));
   }
   const SyntaxTree *identifier = CHILD_SYNTAX_AT(stree, 0);
   const SyntaxTree *expression = CHILD_SYNTAX_AT(stree, 2);

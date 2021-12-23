@@ -8,8 +8,9 @@ SyntaxTree NO_MATCH = {.matched = false, .has_children = false};
 SyntaxTree MATCH_EPSILON = {
     .matched = true, .token = NULL, .has_children = false};
 
-void parser_init(Parser *parser, RuleFn root) {
+void parser_init(Parser *parser, RuleFn root, bool ignore_newline) {
   parser->root = root;
+  parser->ignore_newline = ignore_newline;
   __arena_init(&parser->st_arena, sizeof(SyntaxTree), "SyntaxTree");
 }
 
@@ -23,6 +24,19 @@ void parser_finalize(Parser *parser) { __arena_finalize(&parser->st_arena); }
 Token *parser_next(Parser *parser) {
   if (Q_is_empty(parser->tokens)) {
     return NULL;
+  }
+  if (parser->ignore_newline) {
+    while (true) {
+      if (Q_is_empty(parser->tokens)) {
+        return NULL;
+      }
+      Token *tok = Q_get(parser->tokens, 0);
+      if (tok->type == 1 /* TOKEN_NEWLINE */) {
+        Q_pop(parser->tokens);
+      } else {
+        break;
+      }
+    }
   }
   return Q_get(parser->tokens, 0);
 }
