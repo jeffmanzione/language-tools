@@ -78,6 +78,29 @@ DELETE_IMPL(or, SemanticAnalyzer *analyzer) {
   alist_finalize(& or->expressions);
 }
 
+POPULATE_IMPL(sequence, const SyntaxTree *stree, SemanticAnalyzer *analyzer) {
+  if (alist_len(&stree->children) != 4 && alist_len(&stree->children) != 6) {
+    ERROR("LIST can only have 1 or 2 entries.");
+  }
+  if (alist_len(&stree->children) == 6) {
+    sequence->delim =
+        semantic_analyzer_populate(analyzer, CHILD_SYNTAX_AT(stree, 2));
+    sequence->item =
+        semantic_analyzer_populate(analyzer, CHILD_SYNTAX_AT(stree, 4));
+  } else {
+    sequence->delim = NULL;
+    sequence->item =
+        semantic_analyzer_populate(analyzer, CHILD_SYNTAX_AT(stree, 2));
+  }
+}
+
+DELETE_IMPL(sequence, SemanticAnalyzer *analyzer) {
+  if (NULL != sequence->delim) {
+    semantic_analyzer_delete(analyzer, sequence->delim);
+  }
+  semantic_analyzer_delete(analyzer, sequence->item);
+}
+
 POPULATE_IMPL(optional, const SyntaxTree *stree, SemanticAnalyzer *analyzer) {
   const SyntaxTree *exp = CHILD_SYNTAX_AT(stree, 2);
   optional->expression = semantic_analyzer_populate(analyzer, exp);
@@ -155,6 +178,7 @@ void production_parser_init_semantics(Map *populators, Map *deleters) {
   REGISTER_EXPRESSION(and);
   REGISTER_EXPRESSION(or);
   REGISTER_EXPRESSION(optional);
+  REGISTER_EXPRESSION(sequence);
   REGISTER_EXPRESSION(production_rule);
   REGISTER_EXPRESSION(production_rule_set);
 }

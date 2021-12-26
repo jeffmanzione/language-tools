@@ -5,7 +5,7 @@ def _parser_builder_impl(ctx):
     args = ctx.actions.args()
     args.add_all([ctx.file.rules, program_config, parser_builder_output])
     if not ctx.attr.header:
-        h_file = out_file_name.replace(".c", ".h")
+        h_file = "%s/%s" % (ctx.label.package, out_file_name.replace(".c", ".h"))
         lexer_h_file = "%s/%s.h" % (ctx.attr.lexer.label.package, ctx.attr.lexer.label.name)
         args.add_all([h_file, lexer_h_file])
     ctx.actions.run(

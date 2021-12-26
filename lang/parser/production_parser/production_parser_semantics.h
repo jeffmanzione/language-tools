@@ -20,6 +20,11 @@ DEFINE_EXPRESSION(or) { AList expressions; };
 
 DEFINE_EXPRESSION(optional) { ExpressionTree *expression; };
 
+DEFINE_EXPRESSION(sequence) {
+  ExpressionTree *delim;
+  ExpressionTree *item;
+};
+
 DEFINE_EXPRESSION(production_rule) {
   const char *rule_name;
   ExpressionTree *expression;

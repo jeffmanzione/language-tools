@@ -124,17 +124,17 @@ Production *rule(const char rule_name[]) {
 
 void _production_print(const Production *p, FILE *out) {
   switch (p->type) {
-    case PRODUCTION_EPSILON:
-      fprintf(out, "E");
-      return;
-    case PRODUCTION_RULE:
-      fprintf(out, "rule:%s", p->rule_name);
-      return;
-    case PRODUCTION_TOKEN:
-      fprintf(out, "token:%s", p->token);
-      return;
-    default:  // pass
-      break;
+  case PRODUCTION_EPSILON:
+    fprintf(out, "E");
+    return;
+  case PRODUCTION_RULE:
+    fprintf(out, "rule:%s", p->rule_name);
+    return;
+  case PRODUCTION_TOKEN:
+    fprintf(out, "token:%s", p->token);
+    return;
+  default: // pass
+    break;
   }
   // Must be AND or OR.
   AL_iter iter = alist_iter(&p->children);
@@ -312,6 +312,8 @@ void _write_rule_and_subrules(const char *production_name, const Production *p,
   }
   if (PRODUCTION_OPTIONAL == p->type) {
     p = *(Production **)alist_get(&p->children, 0);
+    _write_rule_and_subrules(production_name, p, is_named_rule, file);
+    return;
   }
   _write_rule_signature(production_name, p, is_named_rule, file);
 
@@ -320,12 +322,6 @@ void _write_rule_and_subrules(const char *production_name, const Production *p,
     _write_and_body(production_name, p, file);
   } else if (PRODUCTION_OR == p->type) {
     _write_or_body(production_name, p, file);
-  } else if (PRODUCTION_OPTIONAL == p->type) {
-    fprintf(file, "  Token *token = parser_next(parser);\n");
-    fprintf(file, "  if (NULL == token || %s != token->type) {\n", p->token);
-    fprintf(file, "    return &NO_MATCH;\n  }\n");
-    fprintf(file, "  return match(parser, rule_%s, \"%s\");\n", production_name,
-            production_name);
   } else if (PRODUCTION_TOKEN == p->type) {
     fprintf(file, "  Token *token = parser_next(parser);\n");
     fprintf(file, "  if (NULL == token || %s != token->type) {\n", p->token);

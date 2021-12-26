@@ -29,9 +29,17 @@ ParserBuilder *_create_parser_builder() {
                       and4(token("KEYWORD_OPTIONAL"), token("SYMBOL_LPAREN"),
                            rule("production_expression"),
                            token("SYMBOL_RPAREN")));
+  parser_builder_rule(
+      pb, "sequence",
+      or2(and6(token("KEYWORD_LIST"), token("SYMBOL_LPAREN"),
+               rule("production_expression"), token("SYMBOL_COMMA"),
+               rule("production_expression"), token("SYMBOL_RPAREN")),
+          and4(token("KEYWORD_LIST"), token("SYMBOL_LPAREN"),
+               rule("production_expression"), token("SYMBOL_RPAREN"))));
   parser_builder_rule(pb, "production_expression",
-                      or6(rule("optional"), rule("and"), rule("or"),
-                          rule("rule"), rule("token"), rule("epsilon")));
+                      or7(rule("optional"), rule("and"), rule("or"),
+                          rule("sequence"), rule("rule"), rule("token"),
+                          rule("epsilon")));
   parser_builder_rule(pb, "production_rule",
                       and4(token("TOKEN_WORD"), token("SYMBOL_ARROW"),
                            rule("production_expression"),

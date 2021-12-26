@@ -61,7 +61,7 @@ SyntaxTree *parser_create_st(Parser *parser, RuleFn rule_fn,
 
 void parser_delete_st(Parser *parser, SyntaxTree *st) {
   if (st->has_children) {
-    AL_iter iter = alist_iter(&st->children);
+    AL_iter iter = alist_riter(&st->children);
     for (; al_has(&iter); al_inc(&iter)) {
       SyntaxTree *child = *(SyntaxTree **)al_value(&iter);
       if (&MATCH_EPSILON == child) {
