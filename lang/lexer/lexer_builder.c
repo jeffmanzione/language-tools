@@ -85,7 +85,7 @@ _Trie *_create_trie_from_symbols(AList *symbols) {
 }
 
 char *_escape_interned(const char *str) {
-  char *tmp = escape(str);
+  char *tmp = escape_string(str);
   char *interned = intern(tmp);
   DEALLOC(tmp);
   return interned;

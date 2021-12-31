@@ -10,7 +10,7 @@ bool is_alphanumeric(const char c);
 bool is_whitespace(const char c);
 bool is_any_space(const char c);
 char char_unesc(char u);
-char *escape(const char str[]);
+char *escape_string(const char str[]);
 
 // bool is_special_char(const char c);
 

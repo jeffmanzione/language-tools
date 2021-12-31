@@ -6,7 +6,7 @@ DELETE_IMPL(epsilon, SemanticAnalyzer *analyzer) {}
 
 POPULATE_IMPL(token, const SyntaxTree *stree, SemanticAnalyzer *analyzer) {
   const SyntaxTree *tok = CHILD_SYNTAX_AT(stree, 2);
-  if (!IS_TOKEN(tok)) {
+  if (!HAS_TOKEN(tok)) {
     ERROR("Rule token must have a token.");
   }
   token->token_type = tok->token->text;
@@ -16,7 +16,7 @@ DELETE_IMPL(token, SemanticAnalyzer *analyzer) {}
 
 POPULATE_IMPL(rule, const SyntaxTree *stree, SemanticAnalyzer *analyzer) {
   const SyntaxTree *rule_name = CHILD_SYNTAX_AT(stree, 2);
-  if (!IS_TOKEN(rule_name)) {
+  if (!HAS_TOKEN(rule_name)) {
     ERROR("Rule rule must have a rule_name.");
   }
   rule->rule_name = rule_name->token->text;
@@ -118,7 +118,7 @@ POPULATE_IMPL(production_rule, const SyntaxTree *stree,
   }
   const SyntaxTree *identifier = CHILD_SYNTAX_AT(stree, 0);
   const SyntaxTree *expression = CHILD_SYNTAX_AT(stree, 2);
-  if (!IS_TOKEN(identifier)) {
+  if (!HAS_TOKEN(identifier)) {
     ERROR("First child of production_rule must be an identifier.");
   }
   production_rule->rule_name = TOKEN_TEXT_FOR(identifier);
@@ -171,7 +171,8 @@ DELETE_IMPL(production_rule_set, SemanticAnalyzer *analyzer) {
   alist_finalize(&production_rule_set->rules);
 }
 
-void production_parser_init_semantics(Map *populators, Map *deleters) {
+void production_parser_init_semantics(Map *populators, Map *producers,
+                                      Map *deleters) {
   REGISTER_EXPRESSION(epsilon);
   REGISTER_EXPRESSION(token);
   REGISTER_EXPRESSION(rule);

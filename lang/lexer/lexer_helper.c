@@ -18,13 +18,13 @@ bool is_alphanumeric(const char c) {
 
 bool is_any_space(const char c) {
   switch (c) {
-    case ' ':
-    case '\t':
-    case '\n':
-    case '\r':
-      return true;
-    default:
-      return false;
+  case ' ':
+  case '\t':
+  case '\n':
+  case '\r':
+    return true;
+  default:
+    return false;
   }
 }
 
@@ -32,64 +32,64 @@ bool is_whitespace(const char c) { return ' ' == c || '\t' == c || '\r' == c; }
 
 char char_unesc(char u) {
   switch (u) {
-    case 'a':
-      return '\a';
-    case 'b':
-      return '\b';
-    case 'f':
-      return '\f';
-    case 'n':
-      return '\n';
-    case 'r':
-      return '\r';
-    case 't':
-      return '\t';
-    case 'v':
-      return '\v';
-    case '\\':
-      return '\\';
-    case '\'':
-      return '\'';
-    case '\"':
-      return '\"';
-    case '\?':
-      return '\?';
-    default:
-      return u;
+  case 'a':
+    return '\a';
+  case 'b':
+    return '\b';
+  case 'f':
+    return '\f';
+  case 'n':
+    return '\n';
+  case 'r':
+    return '\r';
+  case 't':
+    return '\t';
+  case 'v':
+    return '\v';
+  case '\\':
+    return '\\';
+  case '\'':
+    return '\'';
+  case '\"':
+    return '\"';
+  case '\?':
+    return '\?';
+  default:
+    return u;
   }
 }
 
 #define DEFAULT_ESCAPED_STRING_SZ 32
 
-bool _should_escape(char c) {
+static bool _should_escape(char c) {
   switch (c) {
-    case '\'':
-    case '\"':
-    case '\n':
-    case '\r':
-    case '\\':
-      return true;
-    default:
-      return false;
+  case '\'':
+  case '\"':
+  case '\n':
+  case '\r':
+  case '\\':
+    return true;
+  default:
+    return false;
   }
 }
 
-char _excape_char(char c) {
+static char _excape_char(char c) {
   switch (c) {
-    case '\n':
-      return 'n';
-    case '\t':
-      return 't';
-    case '\r':
-      return 'r';
-    case '\\':
-      return '\\';
-    default:
-      return c;
+  case '\n':
+    return 'n';
+  case '\t':
+    return 't';
+  case '\r':
+    return 'r';
+  case '\\':
+    return '\\';
+  default:
+    return c;
   }
 }
 
-char *escape(const char str[]) {
+char *escape_string(const char str[]) {
   if (NULL == str) {
     return NULL;
   }
