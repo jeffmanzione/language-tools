@@ -105,17 +105,17 @@ typedef struct {
   (((NULL != (stree)) && (NULL != (stree->token))) ? stree->token->text : NULL)
 
 #define CHILD_SYNTAX_AT(stree, index)                                          \
-  (alist_len(&(stree)->children) > index                                       \
-       ? *(SyntaxTree **)alist_get(&(stree)->children, index)                  \
+  (alist_len(&(stree)->children) > (index)                                     \
+       ? *(SyntaxTree **)alist_get(&(stree)->children, (index))                \
        : NULL)
 
 #define CHILD_IS_SYNTAX(stree, index, type)                                    \
-  (IS_SYNTAX(CHILD_SYNTAX_AT(stree, index), type))
+  (IS_SYNTAX(CHILD_SYNTAX_AT(stree, (index)), (type)))
 
-#define CHILD_HAS_TOKEN(stree, index) HAS_TOKEN(CHILD_SYNTAX_AT(stree, index))
+#define CHILD_HAS_TOKEN(stree, index) HAS_TOKEN(CHILD_SYNTAX_AT(stree, (index)))
 
 #define CHILD_IS_TOKEN(stree, index, token_type)                               \
-  IS_TOKEN(CHILD_SYNTAX_AT(stree, index), token_type)
+  IS_TOKEN(CHILD_SYNTAX_AT((stree), (index)), (token_type))
 
 #define CHILD_COUNT(stree) (alist_len(&(stree)->children))
 

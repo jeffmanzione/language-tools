@@ -146,3 +146,27 @@ void syntax_tree_print(const SyntaxTree *st, int level, FILE *out) {
   _print_tabs(out, level);
   fprintf(out, "}");
 }
+
+SyntaxTree *parser_prune_newlines(Parser *p, SyntaxTree *st) {
+  if (&NO_MATCH == st || !st->has_children) {
+    return st;
+  }
+  int i;
+  for (i = alist_len(&st->children) - 1; i >= 0; --i) {
+    SyntaxTree *st_child = *(SyntaxTree **)alist_get(&st->children, i);
+    if (st_child->has_children) {
+      *(SyntaxTree **)alist_get(&st->children, i) =
+          parser_prune_newlines(p, st_child);
+    } else if (1 /*TOKEN_NEWLINE*/ == st_child->token->type) {
+      __arena_dealloc(&p->st_arena, st_child);
+      alist_remove_at(&st->children, i);
+    }
+  }
+  if (1 == alist_len(&st->children)) {
+    SyntaxTree *child = *(SyntaxTree **)alist_get(&st->children, 0);
+    alist_finalize(&st->children);
+    __arena_dealloc(&p->st_arena, st);
+    return child;
+  }
+  return st;
+}

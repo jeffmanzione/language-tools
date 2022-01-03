@@ -421,8 +421,8 @@ inline int _tokenize_word(const LineInfo *li, Q *tokens, int col_num) {\n\
 \n\
 inline int _tokenize_newline(const LineInfo *li, Q *tokens, int col_num) {\n\
   char *line = li->line_text;\n\
-  Token *last = (Token *) Q_get(tokens, Q_size(tokens) - 1);\n\
-  if (last->type != TOKEN_NEWLINE) {\n\
+  Token *last = Q_is_empty(tokens) ? NULL : (Token *) Q_get(tokens, Q_size(tokens) - 1);\n\
+  if (NULL == last || last->type != TOKEN_NEWLINE) {\n\
     Token *token =\n\
         token_create(TOKEN_NEWLINE, li->line_num, col_num, line + col_num, 1);\n\
     *Q_add_last(tokens) = token;\n\
