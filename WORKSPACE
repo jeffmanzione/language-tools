@@ -1,14 +1,9 @@
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
-# git_repository(
-#     name = "c_data_structures",
-#     branch = "main",
-#     remote = "https://github.com/jeffreymanzione/c-data-structures.git",
-# )
-
-local_repository(
+git_repository(
     name = "c_data_structures",
-    path = "C:\\Users\\jeffr\\git\\c-data-structures",
+    branch = "main",
+    remote = "https://github.com/jeffreymanzione/c-data-structures.git",
 )
 
 git_repository(
