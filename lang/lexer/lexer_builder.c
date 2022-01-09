@@ -392,7 +392,7 @@ inline int _tokenize_symbol(const LineInfo *li, Q *tokens, int col_num) {\n\
   char *line = li->line_text;\n\
   TokenType type = symbol_token_type(line + col_num);\n\
   if (TOKENTYPE_UNKNOWN == type) {\n\
-    ERROR(\"UNKNOWN TOKEN\");\n\
+    FATALF(\"UNKNOWN TOKEN\");\n\
   }\n\
   const int token_length = strlen(token_type_to_str(type));\n\
   Token *token =\n\
@@ -527,7 +527,7 @@ bool _lexer_tokenize_line(FileInfo *fi, Q *tokens, bool *in_comment, bool *in_st
     } else {\n\
       printf(\"\\\"%c\\\"\\n\", line[col_num+1]);\n\
       fflush(stdout);\n\
-      ERROR(\"NEVER HERE!\");\n\
+      FATALF(\"NEVER HERE!\");\n\
     }\n\
   }\n\
   return true;\n\

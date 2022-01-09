@@ -7,7 +7,7 @@ DELETE_IMPL(epsilon, SemanticAnalyzer *analyzer) {}
 POPULATE_IMPL(token, const SyntaxTree *stree, SemanticAnalyzer *analyzer) {
   const SyntaxTree *tok = CHILD_SYNTAX_AT(stree, 2);
   if (!HAS_TOKEN(tok)) {
-    ERROR("Rule token must have a token.");
+    FATALF("Rule token must have a token.");
   }
   token->token_type = tok->token->text;
 }
@@ -17,7 +17,7 @@ DELETE_IMPL(token, SemanticAnalyzer *analyzer) {}
 POPULATE_IMPL(rule, const SyntaxTree *stree, SemanticAnalyzer *analyzer) {
   const SyntaxTree *rule_name = CHILD_SYNTAX_AT(stree, 2);
   if (!HAS_TOKEN(rule_name)) {
-    ERROR("Rule rule must have a rule_name.");
+    FATALF("Rule rule must have a rule_name.");
   }
   rule->rule_name = rule_name->token->text;
 }
@@ -80,7 +80,7 @@ DELETE_IMPL(or, SemanticAnalyzer *analyzer) {
 
 POPULATE_IMPL(sequence, const SyntaxTree *stree, SemanticAnalyzer *analyzer) {
   if (alist_len(&stree->children) != 4 && alist_len(&stree->children) != 6) {
-    ERROR("LIST can only have 1 or 2 entries.");
+    FATALF("LIST can only have 1 or 2 entries.");
   }
   if (alist_len(&stree->children) == 6) {
     sequence->delim =
@@ -113,13 +113,13 @@ DELETE_IMPL(optional, SemanticAnalyzer *analyzer) {
 POPULATE_IMPL(production_rule, const SyntaxTree *stree,
               SemanticAnalyzer *analyzer) {
   if (alist_len(&stree->children) < 3) {
-    ERROR("Rule production_rule must have 3 children, was %d",
-          alist_len(&stree->children));
+    FATALF("Rule production_rule must have 3 children, was %d",
+           alist_len(&stree->children));
   }
   const SyntaxTree *identifier = CHILD_SYNTAX_AT(stree, 0);
   const SyntaxTree *expression = CHILD_SYNTAX_AT(stree, 2);
   if (!HAS_TOKEN(identifier)) {
-    ERROR("First child of production_rule must be an identifier.");
+    FATALF("First child of production_rule must be an identifier.");
   }
   production_rule->rule_name = TOKEN_TEXT_FOR(identifier);
   // printf("%s\n", production_rule->rule_name);

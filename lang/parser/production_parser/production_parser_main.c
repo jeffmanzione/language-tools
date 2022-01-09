@@ -74,7 +74,7 @@ Production *_produce_production(ParserBuilder *pb, const char rule_name[],
     production_add_child(p, rule(helper_rule_name));
     return p;
   }
-  ERROR("Unknown Expression type.");
+  FATALF("Unknown Expression type.");
   return NULL;
 }
 
@@ -114,7 +114,7 @@ int main(int argc, const char *argv[]) {
     for (; Q_has(&iter); Q_inc(&iter)) {
       printf("  '%s'\n", (*((Token **)Q_value(&iter)))->text);
     }
-    ERROR("EXTRA TOKENS NOT PARSED.");
+    FATALF("EXTRA TOKENS NOT PARSED.");
   }
 
   SemanticAnalyzer analyzer;

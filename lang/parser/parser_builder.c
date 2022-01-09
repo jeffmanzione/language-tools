@@ -161,7 +161,7 @@ void parser_builder_rule(ParserBuilder *pb, const char rule_name[],
                          Production *p) {
   const char *interned_rule_name = intern(rule_name);
   if (NULL != map_lookup(&pb->rules, interned_rule_name)) {
-    ERROR("Multiple rules with name '%s'.", rule_name);
+    FATALF("Multiple rules with name '%s'.", rule_name);
   }
   map_insert(&pb->rules, interned_rule_name, p);
 }
@@ -210,7 +210,7 @@ void _print_child_function_call(const char *production_name,
   } else if (PRODUCTION_EPSILON == p->type) {
     fprintf(file, "&MATCH_EPSILON;\n");
   } else {
-    ERROR("Unexpected production type: %d.", p->type);
+    FATALF("Unexpected production type: %d.", p->type);
   }
 }
 
@@ -340,7 +340,7 @@ void _write_rule_and_subrules(const char *production_name, const Production *p,
   } else if (PRODUCTION_EPSILON == p->type) {
     fprintf(file, "  return &MATCH_EPSILON;\n");
   } else {
-    ERROR("Unexpected production type: %d.", p->type);
+    FATALF("Unexpected production type: %d.", p->type);
   }
   fprintf(file, "}\n\n");
 }

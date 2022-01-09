@@ -27,7 +27,7 @@ ExpressionTree *semantic_analyzer_populate(SemanticAnalyzer *analyzer,
   Populator populate =
       (Populator)map_lookup(&analyzer->populators, tree->rule_fn);
   if (NULL == populate) {
-    ERROR("Populator not found: %s", tree->production_name);
+    FATALF("Populator not found: %s", tree->production_name);
   }
   return populate(tree, analyzer);
 }
@@ -36,7 +36,7 @@ void semantic_analyzer_delete(SemanticAnalyzer *analyzer,
                               ExpressionTree *tree) {
   EDeleter delete = (EDeleter)map_lookup(&analyzer->deleters, tree->type);
   if (NULL == delete) {
-    ERROR("Deleter not found: %s", tree->rule_name);
+    FATALF("Deleter not found: %s", tree->rule_name);
   }
   delete (tree, analyzer);
   DEALLOC(tree->expression);

@@ -91,7 +91,7 @@ typedef struct {
 
 #define EXPECT_TYPE(stree, type)                                               \
   if (stree->rule_fn != type) {                                                \
-    ERROR("Expected type: " #type);                                            \
+    FATALF("Expected type: " #type);                                           \
   }
 
 #define IS_SYNTAX(stree, type) (((stree)->rule_fn) == (type))
@@ -138,7 +138,7 @@ typedef struct {
   SyntaxTree *name;                                                            \
   {                                                                            \
     if (stree->rule_fn != type) {                                              \
-      ERROR("Expected " #type " for " #name);                                  \
+      FATALF("Expected " #type " for " #name);                                 \
       name = NULL;                                                             \
     } else {                                                                   \
       name = stree;                                                            \
@@ -148,7 +148,7 @@ typedef struct {
 #define ASSIGN_IF_TYPE(name, type, stree)                                      \
   {                                                                            \
     if (stree->rule_fn != type) {                                              \
-      ERROR("Expected " #type " for " #name);                                  \
+      FATALF("Expected " #type " for " #name);                                 \
     } else {                                                                   \
       name = stree;                                                            \
     }                                                                          \

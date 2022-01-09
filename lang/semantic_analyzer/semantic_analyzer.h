@@ -35,7 +35,7 @@ ExpressionTree *semantic_analyzer_populate(SemanticAnalyzer *analyzer,
     ASSERT(NOT_NULL(target));                                                  \
     Producer produce = (Producer)map_lookup(&analyzer->producers, tree->type); \
     if (NULL == produce) {                                                     \
-      ERROR("Producer not found: %s", tree->rule_name);                        \
+      FATALF("Producer not found: %s", tree->rule_name);                       \
     }                                                                          \
     produce(tree, analyzer, target);                                           \
   }
