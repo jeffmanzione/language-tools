@@ -67,8 +67,8 @@ void production_add_child(Production *parent, Production *child) {
   alist_append(&parent->children, &child);
 }
 
-inline Production *_production_multi(ProductionType type, int arg_count,
-                                     va_list valist) {
+Production *_production_multi(ProductionType type, int arg_count,
+                              va_list valist) {
   Production *p = _production_multi_helper(type);
   int i;
   for (i = 0; i < arg_count; i++) {
@@ -231,8 +231,7 @@ bool _is_helper_rule(const char production_name[]) {
 void _write_and_body(const char *production_name, const Production *p,
                      FILE *file) {
   if (_is_helper_rule(production_name)) {
-    fprintf(file, "  SyntaxTree *st = parser_create_st(parser, NULL, \"\");\n",
-            production_name, production_name);
+    fprintf(file, "  SyntaxTree *st = parser_create_st(parser, NULL, \"\");\n");
   } else {
     fprintf(file,
             "  SyntaxTree *st = parser_create_st(parser, rule_%s, \"%s\");\n",
@@ -246,8 +245,6 @@ void _write_and_body(const char *production_name, const Production *p,
     fprintf(file, "  {\n    SyntaxTree *st_child = ");
 
     if (PRODUCTION_OPTIONAL == p_child->type) {
-      const Production *p_child_child =
-          *(Production **)alist_get(&p_child->children, 0);
       _print_child_function_call(_production_name_with_child_suffix(
                                      production_name, p_child, child_index),
                                  p_child, file);

@@ -1,6 +1,7 @@
 #include "lang/semantic_analyzer/semantic_analyzer.h"
 
 #include "debug/debug.h"
+#include "struct/struct_defaults.h"
 
 ExpressionTree *__extract_tree(AList *alist_of_tree, int index) {
   ExpressionTree **tree_ptr2 =
