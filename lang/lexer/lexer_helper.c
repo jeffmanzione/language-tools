@@ -102,6 +102,9 @@ char *escape_string(const char str[]) {
       escaped_str = REALLOC(escaped_str, char,
                             (escaped_buffer_sz += DEFAULT_ESCAPED_STRING_SZ));
     }
+    if ('\r' == c) {
+      continue;
+    }
     if (_should_escape(c)) {
       escaped_str[escaped_len++] = '\\';
     }

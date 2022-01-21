@@ -7,6 +7,7 @@
 #include "debug/debug.h"
 #include "struct/alist.h"
 #include "struct/map.h"
+#include "struct/struct_defaults.h"
 #include "util/string.h"
 
 // Hardcoded in lexer.
