@@ -25,11 +25,16 @@ ExpressionTree *semantic_analyzer_populate(SemanticAnalyzer *analyzer,
                                            const SyntaxTree *tree);
 
 #define DEFINE_SEMANTIC_ANALYZER_PRODUCE_FN(ProduceType)                       \
-  typedef void (*Producer)(const ExpressionTree *tree,                         \
-                           SemanticAnalyzer *analyzer, ProduceType *);         \
-  void semantic_analyzer_produce(SemanticAnalyzer *analyzer,                   \
-                                 const ExpressionTree *tree,                   \
-                                 ProduceType *target) {                        \
+  typedef int (*Producer)(const ExpressionTree *tree,                          \
+                          SemanticAnalyzer *analyzer, ProduceType *);          \
+  int semantic_analyzer_produce(SemanticAnalyzer *analyzer,                    \
+                                const ExpressionTree *tree,                    \
+                                ProduceType *target)
+
+#define IMPL_SEMANTIC_ANALYZER_PRODUCE_FN(ProduceType)                         \
+  int semantic_analyzer_produce(SemanticAnalyzer *analyzer,                    \
+                                const ExpressionTree *tree,                    \
+                                ProduceType *target) {                         \
     ASSERT(NOT_NULL(analyzer));                                                \
     ASSERT(NOT_NULL(tree));                                                    \
     ASSERT(NOT_NULL(target));                                                  \
@@ -37,7 +42,7 @@ ExpressionTree *semantic_analyzer_populate(SemanticAnalyzer *analyzer,
     if (NULL == produce) {                                                     \
       FATALF("Producer not found: %s", tree->rule_name);                       \
     }                                                                          \
-    produce(tree, analyzer, target);                                           \
+    return produce(tree, analyzer, target);                                    \
   }
 
 void semantic_analyzer_delete(SemanticAnalyzer *analyzer, ExpressionTree *tree);
