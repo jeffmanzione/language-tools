@@ -129,7 +129,7 @@ void _build_open_close_list(FileInfo *file, AList *tokens) {
     def->open.token_len = strlen(token_unesc);
 
     token_unesc = intern_range(comma2, 1, strlen(comma2 + 1));
-    def->close.token = intern(token_unesc);
+    def->close.token = _escape_interned(token_unesc);
     def->close.token_len = strlen(token_unesc);
     def->open.token_name =
         _string_copy_and_append(li->line_text, comma1 - li->line_text, "_OPEN");
