@@ -35,5 +35,4 @@ DEFINE_EXPRESSION(production_rule_set) { AList rules; };
 void production_parser_init_semantics(Map *populators, Map *producers,
                                       Map *deleters);
 
-#endif /* LANGUAGE_TOOLS_LANG_PARSER_PRODUCTION_PARSER_PRODUCTION_PARSER_SEMANTICS_H_ \
-        */
+#endif /* LANGUAGE_TOOLS_..._PRODUCTION_PARSER_SEMANTICs_H_*/

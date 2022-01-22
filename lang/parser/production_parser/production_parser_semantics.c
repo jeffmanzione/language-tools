@@ -24,8 +24,8 @@ POPULATE_IMPL(rule, const SyntaxTree *stree, SemanticAnalyzer *analyzer) {
 
 DELETE_IMPL(rule, SemanticAnalyzer *analyzer) {}
 
-_populate_list1(SemanticAnalyzer *analyzer, const SyntaxTree *list1,
-                AList *expressions) {
+void _populate_list1(SemanticAnalyzer *analyzer, const SyntaxTree *list1,
+                     AList *expressions) {
   EXPECT_TYPE(list1, rule_list1);
   const SyntaxTree *first = CHILD_SYNTAX_AT(list1, 1);
   ExpressionTree *first_rule = semantic_analyzer_populate(analyzer, first);
