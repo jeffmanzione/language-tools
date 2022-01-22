@@ -103,6 +103,7 @@ char *escape_string(const char str[]) {
                             (escaped_buffer_sz += DEFAULT_ESCAPED_STRING_SZ));
     }
     if ('\r' == c) {
+      ptr++;
       continue;
     }
     if (_should_escape(c)) {
