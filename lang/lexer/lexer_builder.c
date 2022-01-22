@@ -362,7 +362,7 @@ void _write_is_start_of_open_close(AList *list, const char fn_name[],
 }
 
 const char _TOKENIZE_FUNCTIONS_TEXT[] =
-    "inline int _tokenize_number(const LineInfo *li, Q *tokens, int col_num) {\n\
+    "int _tokenize_number(const LineInfo *li, Q *tokens, int col_num) {\n\
   char *line = li->line_text;\n\
   int start = col_num;\n\
   bool is_decimal = false;\n\
@@ -388,7 +388,7 @@ const char _TOKENIZE_FUNCTIONS_TEXT[] =
   return col_num;\n\
 }\n\
 \n\
-inline int _tokenize_symbol(const LineInfo *li, Q *tokens, int col_num) {\n\
+int _tokenize_symbol(const LineInfo *li, Q *tokens, int col_num) {\n\
   char *line = li->line_text;\n\
   TokenType type = symbol_token_type(line + col_num);\n\
   if (TOKENTYPE_UNKNOWN == type) {\n\
@@ -402,7 +402,7 @@ inline int _tokenize_symbol(const LineInfo *li, Q *tokens, int col_num) {\n\
   return col_num;\n\
 }\n\
 \n\
-inline int _tokenize_word(const LineInfo *li, Q *tokens, int col_num) {\n\
+int _tokenize_word(const LineInfo *li, Q *tokens, int col_num) {\n\
   char *line = li->line_text;\n\
   int start = col_num++;\n\
   while (is_alphanumeric(line[col_num])) {\n\
@@ -419,7 +419,7 @@ inline int _tokenize_word(const LineInfo *li, Q *tokens, int col_num) {\n\
   return col_num;\n\
 }\n\
 \n\
-inline int _tokenize_newline(const LineInfo *li, Q *tokens, int col_num) {\n\
+int _tokenize_newline(const LineInfo *li, Q *tokens, int col_num) {\n\
   char *line = li->line_text;\n\
   Token *last = Q_is_empty(tokens) ? NULL : (Token *) Q_get(tokens, Q_size(tokens) - 1);\n\
   if (NULL == last || last->type != TOKEN_NEWLINE) {\n\
