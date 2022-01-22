@@ -184,9 +184,9 @@ const char *_create_rule_function_name(const char *production_name) {
 
 void _write_rule_signature(const char *production_name, const Production *p,
                            bool is_named_rule, FILE *file) {
-  if (!is_named_rule) {
-    fprintf(file, "inline ");
-  }
+  // if (!is_named_rule) {
+  //   fprintf(file, "inline ");
+  // }
   fprintf(file, "SyntaxTree *");
   fprintf(file, "%s", _create_rule_function_name(production_name));
   fprintf(file, "(Parser *parser)");
