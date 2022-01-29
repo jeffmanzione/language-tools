@@ -115,3 +115,27 @@ char *escape_string(const char str[]) {
   escaped_str[escaped_len] = '\0';
   return REALLOC(escaped_str, char, escaped_len + 1);
 }
+
+char *strip_return_char(const char str[]) {
+  if (NULL == str) {
+    return NULL;
+  }
+  const char *ptr = str;
+  char c;
+  char *new_str = ALLOC_ARRAY2(char, DEFAULT_ESCAPED_STRING_SZ);
+  int len = 0, buffer_sz = DEFAULT_ESCAPED_STRING_SZ;
+  while ('\0' != (c = *ptr)) {
+    if (len > buffer_sz - 3) {
+      new_str =
+          REALLOC(new_str, char, (buffer_sz += DEFAULT_ESCAPED_STRING_SZ));
+    }
+    if ('\r' == c) {
+      ptr++;
+      continue;
+    }
+    new_str[len++] = _excape_char(c);
+    ptr++;
+  }
+  new_str[len] = '\0';
+  return REALLOC(new_str, char, len + 1);
+}
