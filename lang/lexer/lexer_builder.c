@@ -460,6 +460,10 @@ bool _lexer_tokenize_line(FileInfo *fi, Q *tokens, bool *in_comment, bool *in_st
         return true;\n\
       }\n\
       col_num = eoc - line + strlen(*comment_end);\n\
+      // Preserve newline if it is the last character.\n\
+      if (ends_with(*comment_end, \"\\n\")) {\n\
+        col_num--;\n\
+      }\n\
       *in_comment = false;\n\
       *comment_end = NULL;\n\
       continue;\n\
