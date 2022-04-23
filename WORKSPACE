@@ -17,3 +17,10 @@ git_repository(
     branch = "main",
     remote = "https://github.com/jeffreymanzione/file-utils.git",
 )
+
+# Self-reference to support example build rule usages.
+git_repository(
+    name = "language_tools",
+    branch = "main",
+    remote = "https://github.com/jeffreymanzione/language-tools.git",
+)
