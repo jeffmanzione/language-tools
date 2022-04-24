@@ -1,6 +1,9 @@
 function ->
   OR(
-    token:KEYWORD_WRITE,
+    token:KEYWORD_AND,
+    token:KEYWORD_OR,
+    token:KEYWORD_NOT,
+    token:KEYWORD_IF,
     token:SYMBOL_PLUS,
     token:SYMBOL_MINUS,
     token:SYMBOL_STAR,

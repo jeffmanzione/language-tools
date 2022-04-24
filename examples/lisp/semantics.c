@@ -7,8 +7,17 @@ POPULATE_IMPL(expression_function, const SyntaxTree *stree,
               SemanticAnalyzer *analyzer) {
   alist_init(&expression_function->args, ExpressionTree *, DEFAULT_ARRAY_SZ);
   switch (CHILD_SYNTAX_AT(stree, 1)->token->type) {
-  case KEYWORD_WRITE:
-    expression_function->func = FUNC_WRITE;
+  case KEYWORD_AND:
+    expression_function->func = FUNC_AND;
+    break;
+  case KEYWORD_OR:
+    expression_function->func = FUNC_OR;
+    break;
+  case KEYWORD_NOT:
+    expression_function->func = FUNC_NOT;
+    break;
+  case KEYWORD_IF:
+    expression_function->func = FUNC_IF;
     break;
   case SYMBOL_PLUS:
     expression_function->func = FUNC_ADD;
@@ -68,15 +77,40 @@ double evaluate_lisp_expression(ExpressionTree *tree, FILE *file) {
     double value = 0;
     AL_iter iter = alist_iter(&f->args);
     switch (f->func) {
-    case FUNC_WRITE:
-      fprintf(
-          file, "%0.4f",
-          evaluate_lisp_expression(*(ExpressionTree **)al_value(&iter), file));
+    case FUNC_AND:
+      value =
+          evaluate_lisp_expression(*(ExpressionTree **)al_value(&iter), file);
       al_inc(&iter);
       for (; al_has(&iter); al_inc(&iter)) {
-        fprintf(file, " %0.4f",
-                evaluate_lisp_expression(*(ExpressionTree **)al_value(&iter),
-                                         file));
+        value = value && evaluate_lisp_expression(
+                             *(ExpressionTree **)al_value(&iter), file);
+      }
+      break;
+    case FUNC_OR:
+      value =
+          evaluate_lisp_expression(*(ExpressionTree **)al_value(&iter), file);
+      al_inc(&iter);
+      for (; al_has(&iter); al_inc(&iter)) {
+        value = value || evaluate_lisp_expression(
+                             *(ExpressionTree **)al_value(&iter), file);
+      }
+      break;
+    case FUNC_NOT:
+      value =
+          !evaluate_lisp_expression(*(ExpressionTree **)al_value(&iter), file);
+      break;
+    case FUNC_IF:
+      value =
+          evaluate_lisp_expression(*(ExpressionTree **)al_value(&iter), file);
+      al_inc(&iter);
+      if (value) {
+        value =
+            evaluate_lisp_expression(*(ExpressionTree **)al_value(&iter), file);
+      } else {
+        // Skip the true condition.
+        al_inc(&iter);
+        value =
+            evaluate_lisp_expression(*(ExpressionTree **)al_value(&iter), file);
       }
       break;
     case FUNC_ADD:

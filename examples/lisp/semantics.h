@@ -9,7 +9,10 @@
 
 DEFINE_EXPRESSION(expression_function) {
   enum {
-    FUNC_WRITE,
+    FUNC_AND,
+    FUNC_OR,
+    FUNC_NOT,
+    FUNC_IF,
     FUNC_ADD,
     FUNC_SUBTRACT,
     FUNC_MULTIPLY,
