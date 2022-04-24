@@ -34,7 +34,7 @@ _parser_builder = rule(
         ),
         "lexer": attr.label(),
         "parser_builder_main": attr.label(
-            default = Label("@language_tools//lang/parser/production_parser:production_parser_main"),
+            default = Label("//lang/parser/production_parser:production_parser_main"),
             executable = True,
             allow_single_file = True,
             cfg = "exec",
@@ -60,7 +60,7 @@ def parser_builder(name, rules, lexer):
         srcs = [":%s_c" % name],
         deps = [
             lexer,
-            "@language_tools//lang/parser",
+            "//lang/parser",
             "@c_data_structures//struct:alist",
         ],
     )

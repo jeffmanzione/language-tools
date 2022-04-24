@@ -1,7 +1,7 @@
 identifier -> token:TOKEN_WORD;
 constant -> OR(token:TOKEN_INTEGER, token:TOKEN_FLOATING);
 string_literal -> token:TOKEN_STRING;
-array_declaration -> OR(AND(token:SYMBOL_LBRACKET, token:SYMBOL_RBRACKET), AND(token:SYMBOL_RBRACKET, rule:tuple_expression, token:SYMBOL_RBRACKET));
+array_declaration -> OR(AND(token:SYMBOL_LBRACKET, token:SYMBOL_RBRACKET), AND(token:SYMBOL_LBRACKET, rule:tuple_expression, token:SYMBOL_RBRACKET));
 primary_expression -> OR(rule:identifier, rule:constant, rule:string_literal, AND(token:SYMBOL_LPAREN, rule:tuple_expression, token:SYMBOL_RPAREN));
 and1 -> OR(AND(token:KEYWORD_AND, rule:and), E);
 and -> AND(rule:primary_expression, rule:and1);
