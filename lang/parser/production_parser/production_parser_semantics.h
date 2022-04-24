@@ -20,6 +20,11 @@ DEFINE_EXPRESSION(or) { AList expressions; };
 
 DEFINE_EXPRESSION(optional) { ExpressionTree *expression; };
 
+DEFINE_EXPRESSION(sequence) {
+  ExpressionTree *delim;
+  ExpressionTree *item;
+};
+
 DEFINE_EXPRESSION(production_rule) {
   const char *rule_name;
   ExpressionTree *expression;
@@ -27,7 +32,7 @@ DEFINE_EXPRESSION(production_rule) {
 
 DEFINE_EXPRESSION(production_rule_set) { AList rules; };
 
-void production_parser_init_semantics(Map *populators, Map *deleters);
+void production_parser_init_semantics(Map *populators, Map *producers,
+                                      Map *deleters);
 
-#endif /* LANGUAGE_TOOLS_LANG_PARSER_PRODUCTION_PARSER_PRODUCTION_PARSER_SEMANTICS_H_ \
-        */
+#endif /* LANGUAGE_TOOLS_..._PRODUCTION_PARSER_SEMANTICs_H_*/

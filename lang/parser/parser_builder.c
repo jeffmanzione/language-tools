@@ -7,6 +7,7 @@
 #include "debug/debug.h"
 #include "struct/alist.h"
 #include "struct/map.h"
+#include "struct/struct_defaults.h"
 #include "util/string.h"
 
 // Hardcoded in lexer.
@@ -67,8 +68,8 @@ void production_add_child(Production *parent, Production *child) {
   alist_append(&parent->children, &child);
 }
 
-inline Production *_production_multi(ProductionType type, int arg_count,
-                                     va_list valist) {
+Production *_production_multi(ProductionType type, int arg_count,
+                              va_list valist) {
   Production *p = _production_multi_helper(type);
   int i;
   for (i = 0; i < arg_count; i++) {
@@ -124,17 +125,17 @@ Production *rule(const char rule_name[]) {
 
 void _production_print(const Production *p, FILE *out) {
   switch (p->type) {
-    case PRODUCTION_EPSILON:
-      fprintf(out, "E");
-      return;
-    case PRODUCTION_RULE:
-      fprintf(out, "rule:%s", p->rule_name);
-      return;
-    case PRODUCTION_TOKEN:
-      fprintf(out, "token:%s", p->token);
-      return;
-    default:  // pass
-      break;
+  case PRODUCTION_EPSILON:
+    fprintf(out, "E");
+    return;
+  case PRODUCTION_RULE:
+    fprintf(out, "rule:%s", p->rule_name);
+    return;
+  case PRODUCTION_TOKEN:
+    fprintf(out, "token:%s", p->token);
+    return;
+  default: // pass
+    break;
   }
   // Must be AND or OR.
   AL_iter iter = alist_iter(&p->children);
@@ -161,7 +162,7 @@ void parser_builder_rule(ParserBuilder *pb, const char rule_name[],
                          Production *p) {
   const char *interned_rule_name = intern(rule_name);
   if (NULL != map_lookup(&pb->rules, interned_rule_name)) {
-    ERROR("Multiple rules with name '%s'.", rule_name);
+    FATALF("Multiple rules with name '%s'.", rule_name);
   }
   map_insert(&pb->rules, interned_rule_name, p);
 }
@@ -183,9 +184,9 @@ const char *_create_rule_function_name(const char *production_name) {
 
 void _write_rule_signature(const char *production_name, const Production *p,
                            bool is_named_rule, FILE *file) {
-  if (!is_named_rule) {
-    fprintf(file, "inline ");
-  }
+  // if (!is_named_rule) {
+  //   fprintf(file, "inline ");
+  // }
   fprintf(file, "SyntaxTree *");
   fprintf(file, "%s", _create_rule_function_name(production_name));
   fprintf(file, "(Parser *parser)");
@@ -210,7 +211,7 @@ void _print_child_function_call(const char *production_name,
   } else if (PRODUCTION_EPSILON == p->type) {
     fprintf(file, "&MATCH_EPSILON;\n");
   } else {
-    ERROR("Unexpected production type: %d.", p->type);
+    FATALF("Unexpected production type: %d.", p->type);
   }
 }
 
@@ -231,8 +232,7 @@ bool _is_helper_rule(const char production_name[]) {
 void _write_and_body(const char *production_name, const Production *p,
                      FILE *file) {
   if (_is_helper_rule(production_name)) {
-    fprintf(file, "  SyntaxTree *st = parser_create_st(parser, NULL, \"\");\n",
-            production_name, production_name);
+    fprintf(file, "  SyntaxTree *st = parser_create_st(parser, NULL, \"\");\n");
   } else {
     fprintf(file,
             "  SyntaxTree *st = parser_create_st(parser, rule_%s, \"%s\");\n",
@@ -246,8 +246,6 @@ void _write_and_body(const char *production_name, const Production *p,
     fprintf(file, "  {\n    SyntaxTree *st_child = ");
 
     if (PRODUCTION_OPTIONAL == p_child->type) {
-      const Production *p_child_child =
-          *(Production **)alist_get(&p_child->children, 0);
       _print_child_function_call(_production_name_with_child_suffix(
                                      production_name, p_child, child_index),
                                  p_child, file);
@@ -312,6 +310,8 @@ void _write_rule_and_subrules(const char *production_name, const Production *p,
   }
   if (PRODUCTION_OPTIONAL == p->type) {
     p = *(Production **)alist_get(&p->children, 0);
+    _write_rule_and_subrules(production_name, p, is_named_rule, file);
+    return;
   }
   _write_rule_signature(production_name, p, is_named_rule, file);
 
@@ -320,12 +320,6 @@ void _write_rule_and_subrules(const char *production_name, const Production *p,
     _write_and_body(production_name, p, file);
   } else if (PRODUCTION_OR == p->type) {
     _write_or_body(production_name, p, file);
-  } else if (PRODUCTION_OPTIONAL == p->type) {
-    fprintf(file, "  Token *token = parser_next(parser);\n");
-    fprintf(file, "  if (NULL == token || %s != token->type) {\n", p->token);
-    fprintf(file, "    return &NO_MATCH;\n  }\n");
-    fprintf(file, "  return match(parser, rule_%s, \"%s\");\n", production_name,
-            production_name);
   } else if (PRODUCTION_TOKEN == p->type) {
     fprintf(file, "  Token *token = parser_next(parser);\n");
     fprintf(file, "  if (NULL == token || %s != token->type) {\n", p->token);
@@ -344,7 +338,7 @@ void _write_rule_and_subrules(const char *production_name, const Production *p,
   } else if (PRODUCTION_EPSILON == p->type) {
     fprintf(file, "  return &MATCH_EPSILON;\n");
   } else {
-    ERROR("Unexpected production type: %d.", p->type);
+    FATALF("Unexpected production type: %d.", p->type);
   }
   fprintf(file, "}\n\n");
 }

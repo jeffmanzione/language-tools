@@ -8,12 +8,18 @@ SyntaxTree NO_MATCH = {.matched = false, .has_children = false};
 SyntaxTree MATCH_EPSILON = {
     .matched = true, .token = NULL, .has_children = false};
 
-void parser_init(Parser *parser, RuleFn root) {
+void parser_init(Parser *parser, RuleFn root, bool ignore_newline) {
   parser->root = root;
+  parser->ignore_newline = ignore_newline;
   __arena_init(&parser->st_arena, sizeof(SyntaxTree), "SyntaxTree");
 }
 
 SyntaxTree *parser_parse(Parser *parser, Q *tokens) {
+  // Remove preceeding newlines.
+  while (Q_size(tokens) > 0 &&
+         0 == strcmp("\n", ((Token *)Q_get(tokens, 0))->text)) {
+    Q_pop(tokens);
+  }
   parser->tokens = tokens;
   return parser->root(parser);
 }
@@ -23,6 +29,19 @@ void parser_finalize(Parser *parser) { __arena_finalize(&parser->st_arena); }
 Token *parser_next(Parser *parser) {
   if (Q_is_empty(parser->tokens)) {
     return NULL;
+  }
+  if (parser->ignore_newline) {
+    while (true) {
+      if (Q_is_empty(parser->tokens)) {
+        return NULL;
+      }
+      Token *tok = Q_get(parser->tokens, 0);
+      if (tok->type == 1 /* TOKEN_NEWLINE */) {
+        Q_pop(parser->tokens);
+      } else {
+        break;
+      }
+    }
   }
   return Q_get(parser->tokens, 0);
 }
@@ -47,7 +66,7 @@ SyntaxTree *parser_create_st(Parser *parser, RuleFn rule_fn,
 
 void parser_delete_st(Parser *parser, SyntaxTree *st) {
   if (st->has_children) {
-    AL_iter iter = alist_iter(&st->children);
+    AL_iter iter = alist_riter(&st->children);
     for (; al_has(&iter); al_inc(&iter)) {
       SyntaxTree *child = *(SyntaxTree **)al_value(&iter);
       if (&MATCH_EPSILON == child) {
@@ -131,4 +150,28 @@ void syntax_tree_print(const SyntaxTree *st, int level, FILE *out) {
   }
   _print_tabs(out, level);
   fprintf(out, "}");
+}
+
+SyntaxTree *parser_prune_newlines(Parser *p, SyntaxTree *st) {
+  if (&NO_MATCH == st || !st->has_children) {
+    return st;
+  }
+  int i;
+  for (i = alist_len(&st->children) - 1; i >= 0; --i) {
+    SyntaxTree *st_child = *(SyntaxTree **)alist_get(&st->children, i);
+    if (st_child->has_children) {
+      *(SyntaxTree **)alist_get(&st->children, i) =
+          parser_prune_newlines(p, st_child);
+    } else if (1 /*TOKEN_NEWLINE*/ == st_child->token->type) {
+      __arena_dealloc(&p->st_arena, st_child);
+      alist_remove_at(&st->children, i);
+    }
+  }
+  if (1 == alist_len(&st->children)) {
+    SyntaxTree *child = *(SyntaxTree **)alist_get(&st->children, 0);
+    alist_finalize(&st->children);
+    __arena_dealloc(&p->st_arena, st);
+    return child;
+  }
+  return st;
 }

@@ -9,7 +9,8 @@
 #include "struct/q.h"
 #include "util/file/file_info.h"
 
-Production *_produce_production(const ExpressionTree *etree) {
+Production *_produce_production(ParserBuilder *pb, const char rule_name[],
+                                const ExpressionTree *etree) {
   if (IS_EXPRESSION(etree, epsilon)) {
     return epsilon();
   }
@@ -21,13 +22,18 @@ Production *_produce_production(const ExpressionTree *etree) {
     Expression_rule *r = EXTRACT_EXPRESSION(etree, rule);
     return rule(r->rule_name);
   }
+  if (IS_EXPRESSION(etree, optional)) {
+    Expression_optional *o = EXTRACT_EXPRESSION(etree, optional);
+    return optional(_produce_production(pb, rule_name, o->expression));
+  }
   if (IS_EXPRESSION(etree, and)) {
     Expression_and *a = EXTRACT_EXPRESSION(etree, and);
     Production *p = production_and();
     AL_iter expressions = alist_iter(&a->expressions);
     for (; al_has(&expressions); al_inc(&expressions)) {
       production_add_child(
-          p, _produce_production(*(ExpressionTree **)al_value(&expressions)));
+          p, _produce_production(pb, rule_name,
+                                 *(ExpressionTree **)al_value(&expressions)));
     }
     return p;
   }
@@ -37,11 +43,38 @@ Production *_produce_production(const ExpressionTree *etree) {
     AL_iter expressions = alist_iter(&o->expressions);
     for (; al_has(&expressions); al_inc(&expressions)) {
       production_add_child(
-          p, _produce_production(*(ExpressionTree **)al_value(&expressions)));
+          p, _produce_production(pb, rule_name,
+                                 *(ExpressionTree **)al_value(&expressions)));
     }
     return p;
   }
-  ERROR("Unknown Expression type.");
+  if (IS_EXPRESSION(etree, sequence)) {
+    Expression_sequence *s = EXTRACT_EXPRESSION(etree, sequence);
+
+    char buffer[128];
+    int len = sprintf(buffer, "%s1", rule_name);
+    char *helper_rule_name = intern_range(buffer, 0, len);
+
+    Production *p_helper_and = production_and();
+    if (NULL != s->delim) {
+      production_add_child(p_helper_and,
+                           _produce_production(pb, helper_rule_name, s->delim));
+    }
+    production_add_child(p_helper_and,
+                         _produce_production(pb, helper_rule_name, s->item));
+    production_add_child(p_helper_and, rule(helper_rule_name));
+    Production *p_helper = production_or();
+    production_add_child(p_helper, p_helper_and);
+    production_add_child(p_helper, epsilon());
+
+    parser_builder_rule(pb, helper_rule_name, p_helper);
+
+    Production *p = production_and();
+    production_add_child(p, _produce_production(pb, helper_rule_name, s->item));
+    production_add_child(p, rule(helper_rule_name));
+    return p;
+  }
+  FATALF("Unknown Expression type.");
   return NULL;
 }
 
@@ -52,8 +85,9 @@ void _produce_parser_builder(ParserBuilder *pb, const ExpressionTree *etree) {
     const ExpressionTree *exp = *(ExpressionTree **)al_value(&rules);
     const Expression_production_rule *rule =
         EXTRACT_EXPRESSION(exp, production_rule);
-    parser_builder_rule(pb, rule->rule_name,
-                        _produce_production(rule->expression));
+    parser_builder_rule(
+        pb, rule->rule_name,
+        _produce_production(pb, rule->rule_name, rule->expression));
   }
 }
 
@@ -71,9 +105,17 @@ int main(int argc, const char *argv[]) {
   lexer_tokenize(fi, &tokens);
 
   Parser parser;
-  parser_init(&parser, rule_production_rule_set);
+  parser_init(&parser, rule_production_rule_set, /*ignore_newline=*/true);
 
   SyntaxTree *productions = parser_parse(&parser, &tokens);
+
+  if (Q_size(&tokens) > 0) {
+    Q_iter iter = Q_iterator(&tokens);
+    for (; Q_has(&iter); Q_inc(&iter)) {
+      printf("  '%s'\n", (*((Token **)Q_value(&iter)))->text);
+    }
+    FATALF("EXTRA TOKENS NOT PARSED.");
+  }
 
   SemanticAnalyzer analyzer;
   semantic_analyzer_init(&analyzer, production_parser_init_semantics);

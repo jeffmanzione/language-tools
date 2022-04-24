@@ -1,4 +1,4 @@
-load("//lang/lexer:lexer_builder.bzl", "lexer_builder")
+load("@language_tools//lang/lexer:lexer_builder.bzl", "lexer_builder")
 
 package(
     default_visibility = ["//visibility:public"],

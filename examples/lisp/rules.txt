@@ -1,0 +1,41 @@
+function ->
+  OR(
+    token:KEYWORD_AND,
+    token:KEYWORD_OR,
+    token:KEYWORD_NOT,
+    token:KEYWORD_IF,
+    token:SYMBOL_PLUS,
+    token:SYMBOL_MINUS,
+    token:SYMBOL_STAR,
+    token:SYMBOL_FSLASH
+  );
+
+expression ->
+  OR(
+    rule:expression_function,
+    token:TOKEN_INTEGER,
+    token:TOKEN_FLOATING
+  );
+
+expression_function ->
+  AND(
+    token:SYMBOL_LPAREN,
+    rule:function,
+    rule:expression_function_items,
+    token:SYMBOL_RPAREN
+  );
+
+expression_function_items ->
+  AND(
+    rule:expression,
+    rule:expression_function_items1
+  );
+
+expression_function_items1 ->
+  OR(
+    AND(
+      rule:expression,
+      rule:expression_function_items1
+    ),
+    E
+  );

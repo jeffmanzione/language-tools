@@ -85,7 +85,7 @@ _Trie *_create_trie_from_symbols(AList *symbols) {
 }
 
 char *_escape_interned(const char *str) {
-  char *tmp = escape(str);
+  char *tmp = escape_string(str);
   char *interned = intern(tmp);
   DEALLOC(tmp);
   return interned;
@@ -125,12 +125,16 @@ void _build_open_close_list(FileInfo *file, AList *tokens) {
     char *comma2 = find_str(comma1 + 1, strlen(comma1 + 1), ",", strlen(","));
     _OpenCloseDef *def = alist_add(tokens);
     char *token_unesc = intern_range(comma1, 1, comma2 - comma1);
-    def->open.token = _escape_interned(token_unesc);
-    def->open.token_len = strlen(token_unesc);
+    char *open = strip_return_char(token_unesc);
+    def->open.token = intern(open);
+    DEALLOC(open);
+    def->open.token_len = strlen(def->open.token);
 
     token_unesc = intern_range(comma2, 1, strlen(comma2 + 1));
-    def->close.token = _escape_interned(token_unesc);
-    def->close.token_len = strlen(token_unesc);
+    char *close = strip_return_char(token_unesc);
+    def->close.token = intern(close);
+    DEALLOC(close);
+    def->close.token_len = strlen(def->close.token);
     def->open.token_name =
         _string_copy_and_append(li->line_text, comma1 - li->line_text, "_OPEN");
     def->close.token_name = _string_copy_and_append(
@@ -163,7 +167,7 @@ void _write_token_type_enum(LexerBuilder *lb, FILE *file) {
   fprintf(file,
           "typedef enum {\n"
           "  TOKENTYPE_UNKNOWN,\n"
-          "  TOKEN_NEWLINE,\n"  // Must stay at index 1 for parser.
+          "  TOKEN_NEWLINE,\n" // Must stay at index 1 for parser.
           "  TOKEN_WORD,\n"
           "  TOKEN_STRING,\n"
           "  TOKEN_INTEGER,\n"
@@ -316,9 +320,8 @@ void _write_resolve_type(LexerBuilder *lb, FILE *file) {
 
   fprintf(file, "TokenType resolve_type(const char word[], int word_len) {\n");
   fprintf(file, "  TokenType type = symbol_token_type(word);\n");
-  fprintf(file,
-          "  if (TOKENTYPE_UNKNOWN == type) { type = _keyword_type(word, "
-          "word_len); }\n");
+  fprintf(file, "  if (TOKENTYPE_UNKNOWN == type) { type = _keyword_type(word, "
+                "word_len); }\n");
   fprintf(file, "  if (TOKENTYPE_UNKNOWN != type) { return type; }\n");
   fprintf(file,
           "  if (is_number(word[0])) {\n"
@@ -363,7 +366,7 @@ void _write_is_start_of_open_close(AList *list, const char fn_name[],
 }
 
 const char _TOKENIZE_FUNCTIONS_TEXT[] =
-    "inline int _tokenize_number(const LineInfo *li, Q *tokens, int col_num) {\n\
+    "int _tokenize_number(const LineInfo *li, Q *tokens, int col_num) {\n\
   char *line = li->line_text;\n\
   int start = col_num;\n\
   bool is_decimal = false;\n\
@@ -389,11 +392,11 @@ const char _TOKENIZE_FUNCTIONS_TEXT[] =
   return col_num;\n\
 }\n\
 \n\
-inline int _tokenize_symbol(const LineInfo *li, Q *tokens, int col_num) {\n\
+int _tokenize_symbol(const LineInfo *li, Q *tokens, int col_num) {\n\
   char *line = li->line_text;\n\
   TokenType type = symbol_token_type(line + col_num);\n\
   if (TOKENTYPE_UNKNOWN == type) {\n\
-    ERROR(\"UNKNOWN TOKEN\");\n\
+    FATALF(\"UNKNOWN TOKEN\");\n\
   }\n\
   const int token_length = strlen(token_type_to_str(type));\n\
   Token *token =\n\
@@ -403,7 +406,7 @@ inline int _tokenize_symbol(const LineInfo *li, Q *tokens, int col_num) {\n\
   return col_num;\n\
 }\n\
 \n\
-inline int _tokenize_word(const LineInfo *li, Q *tokens, int col_num) {\n\
+int _tokenize_word(const LineInfo *li, Q *tokens, int col_num) {\n\
   char *line = li->line_text;\n\
   int start = col_num++;\n\
   while (is_alphanumeric(line[col_num])) {\n\
@@ -420,11 +423,14 @@ inline int _tokenize_word(const LineInfo *li, Q *tokens, int col_num) {\n\
   return col_num;\n\
 }\n\
 \n\
-inline int _tokenize_newline(const LineInfo *li, Q *tokens, int col_num) {\n\
+int _tokenize_newline(const LineInfo *li, Q *tokens, int col_num) {\n\
   char *line = li->line_text;\n\
-  Token *token =\n\
-      token_create(TOKEN_NEWLINE, li->line_num, col_num, line + col_num, 1);\n\
-  *Q_add_last(tokens) = token;\n\
+  Token *last = Q_is_empty(tokens) ? NULL : (Token *) Q_get(tokens, Q_size(tokens) - 1);\n\
+  if (NULL == last || last->type != TOKEN_NEWLINE) {\n\
+    Token *token =\n\
+        token_create(TOKEN_NEWLINE, li->line_num, col_num, line + col_num, 1);\n\
+    *Q_add_last(tokens) = token;\n\
+  }\n\
   ++col_num;\n\
   return col_num;\n\
 }\n\
@@ -445,21 +451,6 @@ bool _lexer_tokenize_line(FileInfo *fi, Q *tokens, bool *in_comment, bool *in_st
     while (is_whitespace(line[col_num])) {\n\
       ++col_num;\n\
     }\n\
-    const char *eoc = is_start_of_comment(line + col_num);\n\
-    if (NULL != eoc) {\n\
-      *in_comment = true;\n\
-      *comment_end = eoc;\n\
-      col_num++;\n\
-      continue;\n\
-    }\n\
-    const char *eos = is_start_of_string(line + col_num);\n\
-    if (NULL != eos) {\n\
-      *in_string = true;\n\
-      *string_end = eos;\n\
-      col_num++;\n\
-      string_start_col = col_num;\n\
-      continue;\n\
-    }\n\
     if (*in_comment) {\n\
       char *eoc = find_str(line + col_num,\n\
                             strlen(line) - col_num, *comment_end, \n\
@@ -469,14 +460,24 @@ bool _lexer_tokenize_line(FileInfo *fi, Q *tokens, bool *in_comment, bool *in_st
         return true;\n\
       }\n\
       col_num = eoc - line + strlen(*comment_end);\n\
+      // Preserve newline if it is the last character.\n\
+      if (ends_with(*comment_end, \"\\n\")) {\n\
+        col_num--;\n\
+      }\n\
       *in_comment = false;\n\
       *comment_end = NULL;\n\
       continue;\n\
     }\n\
     if (*in_string) {\n\
-      char *eos = find_str(line + col_num,\n\
-                            strlen(line) - col_num, *string_end, \n\
-                            strlen(*string_end)); \n\
+      char *eos = line + col_num - 1;\n\
+      while (true) {\n\
+        eos = find_str(eos + 1,\n\
+                       strlen(line) - (eos - line + 1), *string_end, \n\
+                       strlen(*string_end)); \n\
+        if (NULL == eos ||  *(eos - 1) != '\\\\') {\n\
+          break;\n\
+        }\n\
+      }\n\
       if (NULL == eos) {\n\
         eos = line + strlen(line);\n\
       }\n\
@@ -508,7 +509,22 @@ bool _lexer_tokenize_line(FileInfo *fi, Q *tokens, bool *in_comment, bool *in_st
       *string_end = NULL;\n\
       continue;\n\
     }\n\
-    if (is_number(line[col_num])) {\n\
+    const char *eoc = is_start_of_comment(line + col_num);\n\
+    if (NULL != eoc) {\n\
+      *in_comment = true;\n\
+      *comment_end = eoc;\n\
+      col_num++;\n\
+      continue;\n\
+    }\n\
+    const char *eos = is_start_of_string(line + col_num);\n\
+    if (NULL != eos) {\n\
+      *in_string = true;\n\
+      *string_end = eos;\n\
+      col_num++;\n\
+      string_start_col = col_num;\n\
+      continue;\n\
+    }\n\
+    if (is_numeric(line[col_num])) {\n\
       col_num = _tokenize_number(li, tokens, col_num);\n\
     } else if (is_start_of_symbol(line + col_num)) {\n\
       col_num = _tokenize_symbol(li, tokens, col_num);\n\
@@ -519,7 +535,7 @@ bool _lexer_tokenize_line(FileInfo *fi, Q *tokens, bool *in_comment, bool *in_st
     } else {\n\
       printf(\"\\\"%c\\\"\\n\", line[col_num+1]);\n\
       fflush(stdout);\n\
-      ERROR(\"NEVER HERE!\");\n\
+      FATALF(\"NEVER HERE!\");\n\
     }\n\
   }\n\
   return true;\n\
