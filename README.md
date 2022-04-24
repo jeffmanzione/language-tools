@@ -164,5 +164,4 @@ ExpressionTree *etree = semantic_analyzer_populate(&analyzer, stree);
 
 // Use your expression as you see fit.
 double result = evaluate_lisp_expression(etree, stdout);
-...
 ```
