@@ -8,6 +8,8 @@
 
 static ARENA_DEFINE(Token);
 
+static bool inited = false;
+
 void token_fill(Token *tok, int type, int line, int col, const char text[],
                 int text_len) {
   tok->type = type;
@@ -19,9 +21,9 @@ void token_fill(Token *tok, int type, int line, int col, const char text[],
 
 Token *token_create(int type, int line, int col, const char text[],
                     int text_len) {
-  if (!__ARENA__Token.inited) {
+  if (!inited) {
     ARENA_INIT(Token);
-    __ARENA__Token.inited = true;
+    inited = true;
   }
   Token *tok = ARENA_ALLOC(Token);
   token_fill(tok, type, line, col, text, text_len);
@@ -34,7 +36,7 @@ void token_delete(Token *token) {
 }
 
 void token_finalize_all() {
-  if (!__ARENA__Token.inited) {
+  if (!inited) {
     return;
   }
   ARENA_FINALIZE(Token);
