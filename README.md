@@ -107,20 +107,7 @@ The `.txt` files define your language:
       token:SYMBOL_RPAREN
     );
 
-  expression_function_items ->
-    AND(
-      rule:expression,
-      rule:expression_function_items1
-    );
-
-  expression_function_items1 ->
-    OR(
-      AND(
-        rule:expression,
-        rule:expression_function_items1
-      ),
-      E
-    );
+  expression_function_items -> LIST(E, rule:expression);
   ```
 
 ### Semantic Analysis
