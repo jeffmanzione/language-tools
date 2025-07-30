@@ -517,7 +517,7 @@ bool _lexer_tokenize_line(FileInfo *fi, Q *tokens, bool *in_comment, bool *in_st
         return true;\n\
       }\n\
       Token *token = token_create(TOKEN_STRING,\n\
-                   li->line_num, col_num, *string_buffer, strlen(*string_buffer));\n\
+                   li->line_num, string_start_col, *string_buffer, strlen(*string_buffer));\n\
       DEALLOC(*string_buffer);\n\
       *string_buffer = NULL;\n\
       *Q_add_last(tokens) = token;\n\
