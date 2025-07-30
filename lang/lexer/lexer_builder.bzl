@@ -1,3 +1,5 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 def _lexer_builder_impl(ctx):
     out_file_name = ctx.label.name.replace("_h", "").replace("_c", "") + (".h" if ctx.attr.header else ".c")
     lexer_builder_output = ctx.actions.declare_file(out_file_name)
@@ -65,13 +67,13 @@ def lexer_builder(name, symbols, keywords, comments, strings):
         comments = comments,
         strings = strings,
     )
-    return native.cc_library(
+    return cc_library(
         name = name,
         hdrs = [":%s_h" % name],
         srcs = [":%s_c" % name],
         deps = [
-            "@language_tools//lang/lexer:lexer_helper",
-            "@language_tools//lang/lexer:token",
+            "//lang/lexer:lexer_helper",
+            "//lang/lexer:token",
             "@c_data_structures//struct:q",
             "@file_utils//util:string",
             "@file_utils//util/file:file_info",

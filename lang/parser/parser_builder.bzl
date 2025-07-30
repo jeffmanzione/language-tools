@@ -1,3 +1,5 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 def _parser_builder_impl(ctx):
     out_file_name = ctx.label.name.replace("_h", "").replace("_c", "") + (".h" if ctx.attr.header else ".c")
     parser_builder_output = ctx.actions.declare_file(out_file_name)
@@ -54,13 +56,13 @@ def parser_builder(name, rules, lexer):
         rules = rules,
         lexer = lexer,
     )
-    return native.cc_library(
+    return cc_library(
         name = name,
         hdrs = [":%s_h" % name],
         srcs = [":%s_c" % name],
         deps = [
             lexer,
-            "@language_tools//lang/parser",
+            "//lang/parser",
             "@c_data_structures//struct:alist",
         ],
     )

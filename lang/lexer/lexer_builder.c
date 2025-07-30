@@ -370,7 +370,7 @@ void _write_is_start_string(AList *strings, FILE *file) {
   fprintf(file,
           "bool is_start_of_string(const char word[], int *string_open_len, "
           "char **string_close) {\n");
-  AL_iter iter = alist_iter(list);
+  AL_iter iter = alist_iter(strings);
   for (; al_has(&iter); al_inc(&iter)) {
     _OpenCloseDef *def = (_OpenCloseDef *)al_value(&iter);
     fprintf(file, "  if (0 == strncmp(\"%s\", word, %d)) {\n", def->open.token,
@@ -588,7 +588,7 @@ void lexer_builder_write_c_file(LexerBuilder *lb, FILE *file,
   _write_resolve_type(lb, file);
   _write_is_start_of_symbol(lb, file);
   _write_is_start_of_open_close(&lb->comments, "is_start_of_comment", file);
-  _write_is_start_of_open_close(&lb->strings, "is_start_of_string", file);
+  _write_is_start_string(&lb->strings, file);
   fprintf(file, "%s\n", _TOKENIZE_FUNCTIONS_TEXT);
 }
 
@@ -606,7 +606,9 @@ void lexer_builder_write_h_file(LexerBuilder *lb, FILE *file) {
   fprintf(file, "LexType resolve_type(const char word[], int word_len);\n");
   fprintf(file, "bool is_start_of_symbol(const char word[]);\n");
   fprintf(file, "const char *is_start_of_comment(const char word[]);\n");
-  fprintf(file, "const char *is_start_of_string(const char word[]);\n");
+  fprintf(file,
+          "bool is_start_of_string(const char word[], int *string_open_len, "
+          "char **string_close);\n");
   fprintf(file, "void lexer_tokenize_line(FileInfo *file, Q *tokens);\n");
   fprintf(file, "void lexer_tokenize(FileInfo *file, Q *tokens);\n");
   fprintf(file, "\n#endif /* LANG_LEXER_CUSTOM_LEXER_H_ */\n");

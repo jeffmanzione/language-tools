@@ -1,7 +1,7 @@
-load("@language_tools//lang/lexer:lexer_builder.bzl", "lexer_builder")
-load("@language_tools//lang/parser:parser_builder.bzl", "parser_builder")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("//lang/lexer:lexer_builder.bzl", "lexer_builder")
+load("//lang/parser:parser_builder.bzl", "parser_builder")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -27,10 +27,10 @@ cc_library(
     hdrs = ["semantics.h"],
     deps = [
         ":lisp_parser",
-        "@language_tools//lang/lexer:token",
-        "@language_tools//lang/parser/production_lexer",
-        "@language_tools//lang/semantic_analyzer",
-        "@language_tools//lang/semantic_analyzer:expression_tree",
+        "//lang/lexer:token",
+        "//lang/parser/production_lexer",
+        "//lang/semantic_analyzer",
+        "//lang/semantic_analyzer:expression_tree",
     ],
 )
 
@@ -41,14 +41,14 @@ cc_binary(
         ":lisp_lexer",
         ":lisp_parser",
         ":lisp_semantics",
+        "//lang/lexer:token",
+        "//lang/parser",
+        "//lang/parser/production_lexer",
+        "//lang/semantic_analyzer",
+        "//lang/semantic_analyzer:expression_tree",
         "@c_data_structures//struct:q",
         "@file_utils//util/file:file_info",
         "@file_utils//util/file:sfile",
-        "@language_tools//lang/lexer:token",
-        "@language_tools//lang/parser",
-        "@language_tools//lang/parser/production_lexer",
-        "@language_tools//lang/semantic_analyzer",
-        "@language_tools//lang/semantic_analyzer:expression_tree",
         "@memory_wrapper//alloc",
         "@memory_wrapper//alloc/arena:intern",
         "@memory_wrapper//debug",
