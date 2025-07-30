@@ -167,7 +167,7 @@ void _write_token_type_enum(LexerBuilder *lb, FILE *file) {
   fprintf(file,
           "typedef enum {\n"
           "  TOKENTYPE_UNKNOWN,\n"
-          "  TOKEN_NEWLINE,\n" // Must stay at index 1 for parser.
+          "  TOKEN_NEWLINE,\n"  // Must stay at index 1 for parser.
           "  TOKEN_WORD,\n"
           "  TOKEN_STRING,\n"
           "  TOKEN_INTEGER,\n"
@@ -320,8 +320,9 @@ void _write_resolve_type(LexerBuilder *lb, FILE *file) {
 
   fprintf(file, "LexType resolve_type(const char word[], int word_len) {\n");
   fprintf(file, "  LexType type = symbol_token_type(word);\n");
-  fprintf(file, "  if (TOKENTYPE_UNKNOWN == type) { type = _keyword_type(word, "
-                "word_len); }\n");
+  fprintf(file,
+          "  if (TOKENTYPE_UNKNOWN == type) { type = _keyword_type(word, "
+          "word_len); }\n");
   fprintf(file, "  if (TOKENTYPE_UNKNOWN != type) { return type; }\n");
   fprintf(file,
           "  if (is_number(word[0])) {\n"
@@ -363,6 +364,22 @@ void _write_is_start_of_open_close(AList *list, const char fn_name[],
     fprintf(file, "    return \"%s\";\n  }\n", def->close.token);
   }
   fprintf(file, "  return NULL;\n}\n\n");
+}
+
+void _write_is_start_string(AList *strings, FILE *file) {
+  fprintf(file,
+          "bool is_start_of_string(const char word[], int *string_open_len, "
+          "char **string_close) {\n");
+  AL_iter iter = alist_iter(list);
+  for (; al_has(&iter); al_inc(&iter)) {
+    _OpenCloseDef *def = (_OpenCloseDef *)al_value(&iter);
+    fprintf(file, "  if (0 == strncmp(\"%s\", word, %d)) {\n", def->open.token,
+            def->open.token_len);
+    fprintf(file, "    *string_open_len = %d;\n", def->open.token_len);
+    fprintf(file, "    *string_close = \"%s\";\n", def->close.token);
+    fprintf(file, "    return true;\n  }\n");
+  }
+  fprintf(file, "  return false;\n}\n\n");
 }
 
 const char _TOKENIZE_FUNCTIONS_TEXT[] =
@@ -516,11 +533,12 @@ bool _lexer_tokenize_line(FileInfo *fi, Q *tokens, bool *in_comment, bool *in_st
       col_num++;\n\
       continue;\n\
     }\n\
-    const char *eos = is_start_of_string(line + col_num);\n\
-    if (NULL != eos) {\n\
+    int string_open_len;\n\
+    char *string_close;\n\
+    if (is_start_of_string(line + col_num, &string_open_len, &string_close)) {\n\
       *in_string = true;\n\
-      *string_end = eos;\n\
-      col_num++;\n\
+      *string_end = string_close;\n\
+      col_num += string_open_len;\n\
       string_start_col = col_num;\n\
       continue;\n\
     }\n\
