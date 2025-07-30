@@ -26,7 +26,7 @@ int main(int argc, const char *args[]) {
     lexer_tokenize_line(fi, &tokens);
 
     Parser parser;
-    parser_init(&parser, rule_tuple_expression);
+    parser_init(&parser, rule_tuple_expression, /*ignore_newline=*/false);
 
     const SyntaxTree *stree = parser_parse(&parser, &tokens);
     syntax_tree_print(stree, 0, stdout);

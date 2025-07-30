@@ -126,15 +126,15 @@ void _build_open_close_list(FileInfo *file, AList *tokens) {
     _OpenCloseDef *def = alist_add(tokens);
     char *token_unesc = intern_range(comma1, 1, comma2 - comma1);
     char *open = strip_return_char(token_unesc);
-    def->open.token = intern(open);
+    def->open.token = _escape_interned(open);
+    def->open.token_len = strlen(open);
     DEALLOC(open);
-    def->open.token_len = strlen(def->open.token);
 
     token_unesc = intern_range(comma2, 1, strlen(comma2 + 1));
     char *close = strip_return_char(token_unesc);
-    def->close.token = intern(close);
+    def->close.token = _escape_interned(close);
+    def->close.token_len = strlen(close);
     DEALLOC(close);
-    def->close.token_len = strlen(def->close.token);
     def->open.token_name =
         _string_copy_and_append(li->line_text, comma1 - li->line_text, "_OPEN");
     def->close.token_name = _string_copy_and_append(

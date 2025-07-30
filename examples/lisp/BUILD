@@ -1,7 +1,7 @@
+load("@language_tools//lang/lexer:lexer_builder.bzl", "lexer_builder")
+load("@language_tools//lang/parser:parser_builder.bzl", "parser_builder")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("//lang/lexer:lexer_builder.bzl", "lexer_builder")
-load("//lang/parser:parser_builder.bzl", "parser_builder")
 
 package(
     default_visibility = ["//visibility:public"],

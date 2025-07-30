@@ -72,8 +72,8 @@ def lexer_builder(name, symbols, keywords, comments, strings):
         hdrs = [":%s_h" % name],
         srcs = [":%s_c" % name],
         deps = [
-            "//lang/lexer:lexer_helper",
-            "//lang/lexer:token",
+            "@language_tools//lang/lexer:lexer_helper",
+            "@language_tools//lang/lexer:token",
             "@c_data_structures//struct:q",
             "@file_utils//util:string",
             "@file_utils//util/file:file_info",

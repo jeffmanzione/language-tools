@@ -1,0 +1,9 @@
+""" MODULE.bazel """
+
+module(
+    name = "language-tools",
+    repo_name = "com_github_jeffmanzione_language_tools",
+    version = "0.0.1",
+)
+
+bazel_dep(name = "rules_cc", version = "0.1.4", dev_dependency = True)
