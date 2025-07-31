@@ -575,7 +575,6 @@ bool _lexer_tokenize_line(FileInfo *fi, Q *tokens, bool *in_comment, bool *in_st
     int string_open_len;\n\
     if (is_start_of_string(line + col_num, string_type, &string_open_len, string_end)) {\n\
       *in_string = true;\n\
-      *string_end = string_close;\n\
       col_num += string_open_len;\n\
       string_start_col = col_num;\n\
       continue;\n\
