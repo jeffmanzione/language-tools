@@ -405,8 +405,7 @@ void _write_is_start_of_open_close(AList *list, const char fn_name[],
 void _write_is_start_string(LexerBuilder *lb, FILE *file) {
   fprintf(file,
           "bool is_start_of_string(const char word[], LexType *string_type, "
-          "int *string_open_len, "
-          "char **string_close) {\n");
+          "int *string_open_len, char **string_close) {\n");
   AL_iter iter = alist_iter(&lb->strings);
   for (; al_has(&iter); al_inc(&iter)) {
     _OpenCloseDef *def = (_OpenCloseDef *)al_value(&iter);
@@ -575,6 +574,7 @@ bool _lexer_tokenize_line(FileInfo *fi, Q *tokens, bool *in_comment, bool *in_st
     int string_open_len;\n\
     if (is_start_of_string(line + col_num, string_type, &string_open_len, string_end)) {\n\
       *in_string = true;\n\
+      printf(\"%s %d\\n\", string_end, string_open_len);\n\
       col_num += string_open_len;\n\
       string_start_col = col_num;\n\
       continue;\n\
