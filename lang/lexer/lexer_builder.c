@@ -496,6 +496,7 @@ bool _lexer_tokenize_line(FileInfo *fi, Q *tokens, bool *in_comment, bool *in_st
   if (NULL == li) {\n\
     return false;\n\
   }\n\
+  printf(\">> line %zd '%s'\\n\", strlen(li->line_text), li->line_text);\n\
   int col_num = 0;\n\
   int string_start_col = 0;\n\
   char *line = li->line_text;\n\
@@ -605,7 +606,7 @@ void lexer_tokenize_line(FileInfo *file, Q *tokens) {\n\
   const char *comment_end = NULL;\n\
   bool in_string = false;\n\
   const char *string_end = NULL;\n\
-  LexType string_type;\n\
+  LexType string_type = TOKENTYPE_UNKNOWN;\n\
   char *string_buffer = NULL;\n\
   _lexer_tokenize_line(file, tokens, &in_comment, &in_string, &comment_end, &string_end, &string_type, &string_buffer);\n\
 }\n\
