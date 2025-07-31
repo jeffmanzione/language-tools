@@ -589,8 +589,8 @@ bool _lexer_tokenize_line(FileInfo *fi, Q *tokens, bool *in_comment, bool *in_st
     } else if ('\\n' == line[col_num] || '\\r' == line[col_num]) {\n\
       col_num = _tokenize_newline(li, tokens, col_num);\n\
     } else {\n\
-      printf(\"%%d:%%d \\\"%%c\\\"\\n\", li->line_num, col_num, line[col_num+1]);\n\
-      printf(\"line: %%s\\n\", line);\n\
+      printf(\"%d:%d \\\"%c\\\"\\n\", li->line_num, col_num, line[col_num+1]);\n\
+      printf(\"line: %s\\n\", line);\n\
       fflush(stdout);\n\
       FATALF(\"NEVER HERE!\");\n\
     }\n\
