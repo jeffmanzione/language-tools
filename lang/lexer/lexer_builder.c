@@ -421,7 +421,8 @@ void _write_is_start_string(LexerBuilder *lb, FILE *file) {
 }
 
 const char _TOKENIZE_FUNCTIONS_TEXT[] =
-    "int _tokenize_number(const LineInfo *li, Q *tokens, int col_num) {\n\
+    "\n\
+int _tokenize_number(const LineInfo *li, Q *tokens, int col_num) {\n\
   char *line = li->line_text;\n\
   int start = col_num;\n\
   bool is_decimal = false;\n\
@@ -589,8 +590,8 @@ bool _lexer_tokenize_line(FileInfo *fi, Q *tokens, bool *in_comment, bool *in_st
     } else if ('\\n' == line[col_num] || '\\r' == line[col_num]) {\n\
       col_num = _tokenize_newline(li, tokens, col_num);\n\
     } else {\n\
-      printf(\"%d:%d \\\"%c\\\"\\n\", li->line_num, col_num, line[col_num+1]);\n\
-      printf(\"line: %s\\n\", line);\n\
+      printf(\"%d:%d \\\"%c\\\"\\n\", li->line_num, col_num, line[col_num]);\n\
+      printf(\"line: \\\"%s\\\"\\n\", line);\n\
       fflush(stdout);\n\
       FATALF(\"NEVER HERE!\");\n\
     }\n\
@@ -650,8 +651,7 @@ void lexer_builder_write_h_file(LexerBuilder *lb, FILE *file) {
   fprintf(file, "const char *is_start_of_comment(const char word[]);\n");
   fprintf(file,
           "bool is_start_of_string(const char word[], LexType *string_type, "
-          "int *string_open_len, "
-          "char **string_close);\n");
+          "int *string_open_len, char **string_close);\n");
   fprintf(file, "bool token_type_is_string(LexType type);\n");
   fprintf(file, "void lexer_tokenize_line(FileInfo *file, Q *tokens);\n");
   fprintf(file, "void lexer_tokenize(FileInfo *file, Q *tokens);\n");
