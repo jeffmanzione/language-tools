@@ -581,6 +581,7 @@ bool _lexer_tokenize_line(FileInfo *fi, Q *tokens, bool *in_comment, bool *in_st
       continue;\n\
     }\n\
     if ('\\0' == line[col_num]) {\n\
+      printf(\"HERE\\n\");\n\
       continue;\n\
     } else if (is_numeric(line[col_num])) {\n\
       col_num = _tokenize_number(li, tokens, col_num);\n\
