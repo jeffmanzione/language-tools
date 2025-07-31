@@ -18,6 +18,7 @@ typedef struct {
 } _TokenDef;
 
 typedef struct {
+  char *token_name;
   _TokenDef open;
   _TokenDef close;
 } _OpenCloseDef;
@@ -123,7 +124,10 @@ void _build_open_close_list(FileInfo *file, AList *tokens) {
     char *comma1 =
         find_str(li->line_text, strlen(li->line_text), ",", strlen(","));
     char *comma2 = find_str(comma1 + 1, strlen(comma1 + 1), ",", strlen(","));
+
     _OpenCloseDef *def = alist_add(tokens);
+    def->token_name = intern_range(li->line_text, 0, comma1 - li->line_text);
+
     char *token_unesc = intern_range(comma1, 1, comma2 - comma1);
     char *open = strip_return_char(token_unesc);
     def->open.token = _escape_interned(open);
@@ -169,10 +173,14 @@ void _write_token_type_enum(LexerBuilder *lb, FILE *file) {
           "  TOKENTYPE_UNKNOWN,\n"
           "  TOKEN_NEWLINE,\n"  // Must stay at index 1 for parser.
           "  TOKEN_WORD,\n"
-          "  TOKEN_STRING,\n"
           "  TOKEN_INTEGER,\n"
           "  TOKEN_FLOATING,\n");
-  AL_iter iter = alist_iter(&lb->symbols);
+  AL_iter iter = alist_iter(&lb->strings);
+  for (; al_has(&iter); al_inc(&iter)) {
+    _OpenCloseDef *open_close_def = (_OpenCloseDef *)al_value(&iter);
+    fprintf(file, "  %s,\n", open_close_def->token_name);
+  }
+  iter = alist_iter(&lb->symbols);
   for (; al_has(&iter); al_inc(&iter)) {
     _TokenDef *token_def = (_TokenDef *)al_value(&iter);
     fprintf(file, "  %s,\n", token_def->token_name);
@@ -191,10 +199,15 @@ void _write_token_type_to_str(LexerBuilder *lb, FILE *file) {
   fprintf(file, "  switch(token_type) {\n");
   fprintf(file, "    case TOKEN_NEWLINE: return \"\\n\";\n");
   fprintf(file, "    case TOKEN_WORD: return \"TOKEN_WORD\";\n");
-  fprintf(file, "    case TOKEN_STRING: return \"TOKEN_STRING\";\n");
   fprintf(file, "    case TOKEN_INTEGER: return \"TOKEN_INTEGER\";\n");
   fprintf(file, "    case TOKEN_FLOATING: return \"TOKEN_FLOATING\";\n");
-  AL_iter iter = alist_iter(&lb->symbols);
+  AL_iter iter = alist_iter(&lb->strings);
+  for (; al_has(&iter); al_inc(&iter)) {
+    _OpenCloseDef *open_close_def = (_OpenCloseDef *)al_value(&iter);
+    fprintf(file, "    case %s: return \"%s\";\n", open_close_def->token_name,
+            open_close_def->token_name);
+  }
+  iter = alist_iter(&lb->symbols);
   for (; al_has(&iter); al_inc(&iter)) {
     _TokenDef *token_def = (_TokenDef *)al_value(&iter);
     fprintf(file, "    case %s: return \"%s\";\n", token_def->token_name,
@@ -215,13 +228,17 @@ void _write_token_name_to_token_type(LexerBuilder *lb, FILE *file) {
           "  if (0 == strcmp(\"TOKEN_NEWLINE\", str)) return TOKEN_NEWLINE;\n");
   fprintf(file, "  if (0 == strcmp(\"TOKEN_WORD\", str)) return TOKEN_WORD;\n");
   fprintf(file,
-          "  if (0 == strcmp(\"TOKEN_STRING\", str)) return TOKEN_STRING;\n");
-  fprintf(file,
           "  if (0 == strcmp(\"TOKEN_INTEGER\", str)) return TOKEN_INTEGER;\n");
   fprintf(
       file,
       "  if (0 == strcmp(\"TOKEN_FLOATING\", str)) return TOKEN_FLOATING;\n");
-  AL_iter iter = alist_iter(&lb->symbols);
+  AL_iter iter = alist_iter(&lb->strings);
+  for (; al_has(&iter); al_inc(&iter)) {
+    _OpenCloseDef *open_close_def = (_OpenCloseDef *)al_value(&iter);
+    fprintf(file, "  if (0 == strcmp(\"%s\", str)) return %s;\n",
+            open_close_def->token_name, open_close_def->token_name);
+  }
+  iter = alist_iter(&lb->symbols);
   for (; al_has(&iter); al_inc(&iter)) {
     _TokenDef *token_def = (_TokenDef *)al_value(&iter);
     fprintf(file, "  if (0 == strcmp(\"%s\", str)) return %s;\n",
@@ -241,10 +258,15 @@ void _write_token_type_to_name(LexerBuilder *lb, FILE *file) {
   fprintf(file, "  switch(token_type) {\n");
   fprintf(file, "    case TOKEN_NEWLINE: return \"TOKEN_NEWLINE\";\n");
   fprintf(file, "    case TOKEN_WORD: return \"TOKEN_WORD\";\n");
-  fprintf(file, "    case TOKEN_STRING: return \"TOKEN_STRING\";\n");
   fprintf(file, "    case TOKEN_INTEGER: return \"TOKEN_INTEGER\";\n");
   fprintf(file, "    case TOKEN_FLOATING: return \"TOKEN_FLOATING\";\n");
-  AL_iter iter = alist_iter(&lb->symbols);
+  AL_iter iter = alist_iter(&lb->strings);
+  for (; al_has(&iter); al_inc(&iter)) {
+    _OpenCloseDef *open_close_def = (_OpenCloseDef *)al_value(&iter);
+    fprintf(file, "    case %s: return \"%s\";\n", open_close_def->token_name,
+            open_close_def->token_name);
+  }
+  iter = alist_iter(&lb->symbols);
   for (; al_has(&iter); al_inc(&iter)) {
     _TokenDef *token_def = (_TokenDef *)al_value(&iter);
     fprintf(file, "    case %s: return \"%s\";\n", token_def->token_name,
@@ -353,6 +375,20 @@ void _write_is_start_of_symbol(LexerBuilder *lb, FILE *file) {
   fprintf(file, "  }\n}\n\n");
 }
 
+void _write_token_type_is_string(LexerBuilder *lb, FILE *file) {
+  fprintf(file, "bool token_type_is_string(LexType type) {\n");
+  AL_iter iter = alist_iter(&lb->strings);
+  fprintf(file, "  switch (type) {\n");
+  for (; al_has(&iter); al_inc(&iter)) {
+    _OpenCloseDef *open_close_def = (_OpenCloseDef *)al_value(&iter);
+    fprintf(file, "    case %s:\n", open_close_def->token_name);
+  }
+  fprintf(file, "      return true;\n");
+  fprintf(file, "    default:\n");
+  fprintf(file, "      return false;\n");
+  fprintf(file, "  }\n}\n\n");
+}
+
 void _write_is_start_of_open_close(AList *list, const char fn_name[],
                                    FILE *file) {
   fprintf(file, "const char *%s(const char word[]) {\n", fn_name);
@@ -366,15 +402,17 @@ void _write_is_start_of_open_close(AList *list, const char fn_name[],
   fprintf(file, "  return NULL;\n}\n\n");
 }
 
-void _write_is_start_string(AList *strings, FILE *file) {
+void _write_is_start_string(LexerBuilder *lb, FILE *file) {
   fprintf(file,
-          "bool is_start_of_string(const char word[], int *string_open_len, "
+          "bool is_start_of_string(const char word[], LexType *string_type, "
+          "int *string_open_len, "
           "char **string_close) {\n");
-  AL_iter iter = alist_iter(strings);
+  AL_iter iter = alist_iter(&lb->strings);
   for (; al_has(&iter); al_inc(&iter)) {
     _OpenCloseDef *def = (_OpenCloseDef *)al_value(&iter);
     fprintf(file, "  if (0 == strncmp(\"%s\", word, %d)) {\n", def->open.token,
             def->open.token_len);
+    fprintf(file, "    *string_type = %s;\n", def->token_name);
     fprintf(file, "    *string_open_len = %d;\n", def->open.token_len);
     fprintf(file, "    *string_close = \"%s\";\n", def->close.token);
     fprintf(file, "    return true;\n  }\n");
@@ -453,7 +491,7 @@ int _tokenize_newline(const LineInfo *li, Q *tokens, int col_num) {\n\
 }\n\
 \n\
 bool _lexer_tokenize_line(FileInfo *fi, Q *tokens, bool *in_comment, bool *in_string,\n\
-                          const char **comment_end, const char **string_end, char ** string_buffer) {\n\
+                          const char **comment_end, const char **string_end, LexType *string_type, char **string_buffer) {\n\
   LineInfo *li = file_info_getline(fi);\n\
   if (NULL == li) {\n\
     return false;\n\
@@ -516,7 +554,7 @@ bool _lexer_tokenize_line(FileInfo *fi, Q *tokens, bool *in_comment, bool *in_st
       if (line + strlen(line) == eos) {\n\
         return true;\n\
       }\n\
-      Token *token = token_create(TOKEN_STRING,\n\
+      Token *token = token_create(*string_type,\n\
                    li->line_num, string_start_col, *string_buffer, strlen(*string_buffer));\n\
       DEALLOC(*string_buffer);\n\
       *string_buffer = NULL;\n\
@@ -535,7 +573,7 @@ bool _lexer_tokenize_line(FileInfo *fi, Q *tokens, bool *in_comment, bool *in_st
     }\n\
     int string_open_len;\n\
     char *string_close;\n\
-    if (is_start_of_string(line + col_num, &string_open_len, &string_close)) {\n\
+    if (is_start_of_string(line + col_num, string_type, &string_open_len, &string_close)) {\n\
       *in_string = true;\n\
       *string_end = string_close;\n\
       col_num += string_open_len;\n\
@@ -565,8 +603,9 @@ void lexer_tokenize_line(FileInfo *file, Q *tokens) {\n\
   const char *comment_end = NULL;\n\
   bool in_string = false;\n\
   const char *string_end = NULL;\n\
+  LexType string_type;\n\
   char *string_buffer = NULL;\n\
-  _lexer_tokenize_line(file, tokens, &in_comment,&in_string, &comment_end, &string_end, &string_buffer);\n\
+  _lexer_tokenize_line(file, tokens, &in_comment, &in_string, &comment_end, &string_end, &string_type, &string_buffer);\n\
 }\n\
 void lexer_tokenize(FileInfo *file, Q *tokens) {\n\
   ASSERT(NOT_NULL(file), NOT_NULL(tokens));\n\
@@ -574,8 +613,9 @@ void lexer_tokenize(FileInfo *file, Q *tokens) {\n\
   const char *comment_end = NULL;\n\
   bool in_string = false;\n\
   const char *string_end = NULL;\n\
+  LexType string_type;\n\
   char *string_buffer = NULL;\n\
-  while (_lexer_tokenize_line(file, tokens, &in_comment,&in_string, &comment_end, &string_end, &string_buffer))\n\
+  while (_lexer_tokenize_line(file, tokens, &in_comment, &in_string, &comment_end, &string_end, &string_type, &string_buffer))\n\
     ;\n\
 }";
 
@@ -588,7 +628,8 @@ void lexer_builder_write_c_file(LexerBuilder *lb, FILE *file,
   _write_resolve_type(lb, file);
   _write_is_start_of_symbol(lb, file);
   _write_is_start_of_open_close(&lb->comments, "is_start_of_comment", file);
-  _write_is_start_string(&lb->strings, file);
+  _write_is_start_string(lb, file);
+  _write_token_type_is_string(lb, file);
   fprintf(file, "%s\n", _TOKENIZE_FUNCTIONS_TEXT);
 }
 
@@ -607,8 +648,10 @@ void lexer_builder_write_h_file(LexerBuilder *lb, FILE *file) {
   fprintf(file, "bool is_start_of_symbol(const char word[]);\n");
   fprintf(file, "const char *is_start_of_comment(const char word[]);\n");
   fprintf(file,
-          "bool is_start_of_string(const char word[], int *string_open_len, "
+          "bool is_start_of_string(const char word[], LexType *string_type, "
+          "int *string_open_len, "
           "char **string_close);\n");
+  fprintf(file, "bool token_type_is_string(LexType type);\n");
   fprintf(file, "void lexer_tokenize_line(FileInfo *file, Q *tokens);\n");
   fprintf(file, "void lexer_tokenize(FileInfo *file, Q *tokens);\n");
   fprintf(file, "\n#endif /* LANG_LEXER_CUSTOM_LEXER_H_ */\n");
