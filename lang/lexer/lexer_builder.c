@@ -573,15 +573,16 @@ bool _lexer_tokenize_line(FileInfo *fi, Q *tokens, bool *in_comment, bool *in_st
       continue;\n\
     }\n\
     int string_open_len;\n\
-    char *string_close;\n\
-    if (is_start_of_string(line + col_num, string_type, &string_open_len, &string_close)) {\n\
+    if (is_start_of_string(line + col_num, string_type, &string_open_len, string_end)) {\n\
       *in_string = true;\n\
       *string_end = string_close;\n\
       col_num += string_open_len;\n\
       string_start_col = col_num;\n\
       continue;\n\
     }\n\
-    if (is_numeric(line[col_num])) {\n\
+    if ('\\0' == line[col_num]) {\n\
+      continue;\n\
+    } else if (is_numeric(line[col_num])) {\n\
       col_num = _tokenize_number(li, tokens, col_num);\n\
     } else if (is_start_of_symbol(line + col_num)) {\n\
       col_num = _tokenize_symbol(li, tokens, col_num);\n\
