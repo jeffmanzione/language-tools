@@ -4,7 +4,7 @@
 #include "examples/lisp/lisp_lexer.h"
 #include "examples/lisp/lisp_parser.h"
 #include "examples/lisp/semantics.h"
-#include "lang/lexer/token.h"
+#include "language-tools/lexer/token.h"
 #include "struct/q.h"
 #include "util/file/file_info.h"
 #include "util/file/sfile.h"

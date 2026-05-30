@@ -19,6 +19,6 @@ git_repository(
 )
 
 local_repository(
-    name = "language_tools",
+    name = "language-tools",
     path = ".",
 )

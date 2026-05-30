@@ -1,10 +1,10 @@
-#ifndef LANGUAGE_TOOLS_EXAMPLES_LISP_SEMANTICS_H_
-#define LANGUAGE_TOOLS_EXAMPLES_LISP_SEMANTICS_H_
+#ifndef COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_EXAMPLES_LISP_SEMANTICS_H_
+#define COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_EXAMPLES_LISP_SEMANTICS_H_
 
 #include "examples/lisp/lisp_parser.h"
-#include "lang/lexer/token.h"
-#include "lang/semantic_analyzer/expression_tree.h"
-#include "lang/semantic_analyzer/semantic_analyzer.h"
+#include "language-tools/lexer/token.h"
+#include "language-tools/semantic_analyzer/expression_tree.h"
+#include "language-tools/semantic_analyzer/semantic_analyzer.h"
 #include "struct/alist.h"
 
 DEFINE_EXPRESSION(expression_function) {
@@ -27,4 +27,4 @@ void init_semantics(Map *populators, Map *producers, Map *deleters);
 
 double evaluate_lisp_expression(ExpressionTree *tree, FILE *file);
 
-#endif /* LANGUAGE_TOOLS_EXAMPLES_LISP_SEMANTICS_H_*/
+#endif /* COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_EXAMPLES_LISP_SEMANTICS_H_*/

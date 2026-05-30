@@ -1,0 +1,2 @@
+common --registry=https://bcr.bazel.build
+common --registry=http://localhost:8080

@@ -15,8 +15,8 @@ To create the code generation for your language, define bazel rules for your lex
 `BUILD`:
 
 ```starlark
-load("@language_tools//lang/lexer:lexer_builder.bzl", "lexer_builder")
-load("@language_tools//lang/parser:parser_builder.bzl", "parser_builder")
+load("@language-tools//language-tools/lexer:lexer_builder.bzl", "lexer_builder")
+load("@language-tools//language-tools/parser:parser_builder.bzl", "parser_builder")
 
 lexer_builder(
     name = "lisp_lexer",
@@ -37,16 +37,16 @@ parser_builder(
 
 The `.txt` files define your language:
 
-* `comments.txt`: Defines which sequences start and end comments.
+- `comments.txt`: Defines which sequences start and end comments.
   Example defining `;` to open and `\n` to close a comment:
-  
+
   ```txt
   COMMENT_LINE,;,\n
   ```
 
-* `keywords.txt`: Defines which sequences are keywords.
+- `keywords.txt`: Defines which sequences are keywords.
   Example:
-  
+
   ```txt
   KEYWORD_AND,and
   KEYWORD_OR,or
@@ -54,18 +54,18 @@ The `.txt` files define your language:
   KEYWORD_IF,if
   ```
 
-* `strings.txt`: Defines which sequences start and end strings.
+- `strings.txt`: Defines which sequences start and end strings.
 
   Example:
-  
+
   ```txt
   STRING_SINGLEQUOTE,','
   ```
 
-* `symbols.txt`: Defines which sequences are symbols.
+- `symbols.txt`: Defines which sequences are symbols.
 
   Example:
-  
+
   ```txt
   SYMBOL_LPAREN,(
   SYMBOL_RPAREN,)
@@ -75,7 +75,7 @@ The `.txt` files define your language:
   SYMBOL_FSLASH,/
   ```
 
-* `rules.txt`: Defines the syntax of the language.
+- `rules.txt`: Defines the syntax of the language.
 
   Example rules for the LISP language:
 
