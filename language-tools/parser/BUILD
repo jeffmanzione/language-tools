@@ -1,6 +1,8 @@
-load("@language-tools//language-tools/parser:parser_builder.bzl", "parser_builder")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+
+# load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//language-tools/parser:parser_builder.bzl", "parser_builder")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -11,13 +13,10 @@ cc_library(
     srcs = ["parser_builder.c"],
     hdrs = ["parser_builder.h"],
     deps = [
-        "@c_data_structures//struct:alist",
-        "@file_utils//util:string",
-        "@memory_wrapper//alloc",
-        "@memory_wrapper//alloc/arena:intern",
-        "@memory_wrapper//debug",
-        "@memory_wrapper//struct:map",
-        "@memory_wrapper//struct:struct_defaults",
+        "//language-tools:intern",
+        "@jeffmanzione_c_data_structures//c-data-structures:arraylike",
+        "@jeffmanzione_c_data_structures//c-data-structures:maplike",
+        "@jeffmanzione_file_utils//file-utils:string_utils",
     ],
 )
 
@@ -27,9 +26,8 @@ cc_library(
     hdrs = ["parser.h"],
     deps = [
         "//language-tools/lexer:token",
-        "@c_data_structures//struct:alist",
-        "@c_data_structures//struct:q",
-        "@memory_wrapper//alloc/arena",
+        "@jeffmanzione_c_data_structures//c-data-structures:arraylike",
+        "@jeffmanzione_rzalloc//rzalloc",
     ],
 )
 
@@ -39,13 +37,11 @@ cc_binary(
     deps = [
         ":parser",
         ":test_parser",
+        "//language-tools:intern",
         "//language-tools/lexer:test_lexer",
         "//language-tools/lexer:token",
-        "@c_data_structures//struct:q",
-        "@file_utils//util/file:file_info",
-        "@file_utils//util/file:sfile",
-        "@memory_wrapper//alloc",
-        "@memory_wrapper//alloc/arena:intern",
+        "@jeffmanzione_file_utils//file-utils:file_info",
+        "@jeffmanzione_file_utils//file-utils:sfile",
     ],
 )
 

@@ -62,7 +62,7 @@ def parser_builder(name, rules, lexer):
         srcs = [":%s_c" % name],
         deps = [
             lexer,
-            "@language-tools//language-tools/parser",
-            "@c_data_structures//struct:alist",
+            "//language-tools/parser",
+            "@jeffmanzione_c_data_structures//c-data-structures:arraylike",
         ],
     )

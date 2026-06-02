@@ -5,7 +5,6 @@
 #include "language-tools/lexer/token.h"
 #include "language-tools/semantic_analyzer/expression_tree.h"
 #include "language-tools/semantic_analyzer/semantic_analyzer.h"
-#include "struct/alist.h"
 
 DEFINE_EXPRESSION(expression_function) {
   enum {
@@ -18,12 +17,12 @@ DEFINE_EXPRESSION(expression_function) {
     FUNC_MULTIPLY,
     FUNC_DIVIDE,
   } func;
-  AList args; /* ExpressionTree* */
+  ExpressionTreeArray args;
 };
 
 DEFINE_EXPRESSION(expression) { double floating; };
 
-void init_semantics(Map *populators, Map *producers, Map *deleters);
+void init_semantics(SAMap *populators, SAMap *producers, SAMap *deleters);
 
 double evaluate_lisp_expression(ExpressionTree *tree, FILE *file);
 

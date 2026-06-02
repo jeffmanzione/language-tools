@@ -483,7 +483,7 @@ int tokenize_newline_(const LineInfo *li, TokenArray *tokens, int col_num) {\n\
 }\n\
 \n\
 bool lexer_tokenize_line_(FileInfo *fi, TokenArray *tokens, bool *in_comment, bool *in_string,\n\
-                          const char **comment_end, const char **string_end, LexType *string_type, char **string_buffer) {\n\
+                          char **comment_end, char **string_end, LexType *string_type, char **string_buffer) {\n\
   LineInfo *li = file_info_getline(fi);\n\
   if (NULL == li) {\n\
     return false;\n\
@@ -592,18 +592,18 @@ bool lexer_tokenize_line_(FileInfo *fi, TokenArray *tokens, bool *in_comment, bo
 \n\
 void lexer_tokenize_line(FileInfo *file, TokenArray *tokens) {\n\
   bool in_comment = false;\n\
-  const char *comment_end = NULL;\n\
+  char *comment_end = NULL;\n\
   bool in_string = false;\n\
-  const char *string_end = NULL;\n\
+  char *string_end = NULL;\n\
   LexType string_type = TOKENTYPE_UNKNOWN;\n\
   char *string_buffer = NULL;\n\
   lexer_tokenize_line_(file, tokens, &in_comment, &in_string, &comment_end, &string_end, &string_type, &string_buffer);\n\
 }\n\
 void lexer_tokenize(FileInfo *file, TokenArray *tokens) {\n\
   bool in_comment = false;\n\
-  const char *comment_end = NULL;\n\
+  char *comment_end = NULL;\n\
   bool in_string = false;\n\
-  const char *string_end = NULL;\n\
+  char *string_end = NULL;\n\
   LexType string_type;\n\
   char *string_buffer = NULL;\n\
   while (lexer_tokenize_line_(file, tokens, &in_comment, &in_string, &comment_end, &string_end, &string_type, &string_buffer))\n\

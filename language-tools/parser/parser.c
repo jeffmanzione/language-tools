@@ -2,7 +2,7 @@
 
 #include <stdbool.h>
 
-#include "struct/alist.h"
+IMPL_ARRAYLIKE(SyntaxTreeArray, SyntaxTree *);
 
 SyntaxTree NO_MATCH = {.matched = false, .has_children = false};
 SyntaxTree MATCH_EPSILON = {
@@ -11,52 +11,52 @@ SyntaxTree MATCH_EPSILON = {
 void parser_init(Parser *parser, RuleFn root, bool ignore_newline) {
   parser->root = root;
   parser->ignore_newline = ignore_newline;
-  __arena_init(&parser->st_arena, sizeof(SyntaxTree), "SyntaxTree");
+  arena_init(&parser->st_arena, sizeof(SyntaxTree));
 }
 
-SyntaxTree *parser_parse(Parser *parser, Q *tokens) {
+SyntaxTree *parser_parse(Parser *parser, TokenArray *tokens) {
   // Remove preceeding newlines.
-  while (Q_size(tokens) > 0 &&
-         0 == strcmp("\n", ((Token *)Q_get(tokens, 0))->text)) {
-    Q_pop(tokens);
+  while (TokenArray_size(tokens) > 0 &&
+         0 == strcmp("\n", TokenArray_get_unchecked(tokens, 0)->text)) {
+    TokenArray_pop_front_unchecked(tokens);
   }
   parser->tokens = tokens;
   return parser->root(parser);
 }
 
-void parser_finalize(Parser *parser) { __arena_finalize(&parser->st_arena); }
+void parser_finalize(Parser *parser) { arena_clear(&parser->st_arena); }
 
 Token *parser_next(Parser *parser) {
-  if (Q_is_empty(parser->tokens)) {
+  if (TokenArray_is_empty(parser->tokens)) {
     return NULL;
   }
   if (parser->ignore_newline) {
     while (true) {
-      if (Q_is_empty(parser->tokens)) {
+      if (TokenArray_is_empty(parser->tokens)) {
         return NULL;
       }
-      Token *tok = Q_get(parser->tokens, 0);
+      Token *tok = TokenArray_get_unchecked(parser->tokens, 0);
       if (tok->type == 1 /* TOKEN_NEWLINE */) {
-        Q_pop(parser->tokens);
+        TokenArray_pop_front_unchecked(parser->tokens);
       } else {
         break;
       }
     }
   }
-  return Q_get(parser->tokens, 0);
+  return TokenArray_get_unchecked(parser->tokens, 0);
 }
 
 Token *parser_remove(Parser *parser) {
-  if (Q_is_empty(parser->tokens)) {
+  if (TokenArray_is_empty(parser->tokens)) {
     return NULL;
   }
-  Token *token = Q_pop(parser->tokens);
+  Token *token = TokenArray_pop_front_unchecked(parser->tokens);
   return token;
 }
 
 SyntaxTree *parser_create_st(Parser *parser, RuleFn rule_fn,
                              const char *production_name) {
-  SyntaxTree *st = (SyntaxTree *)__arena_alloc(&parser->st_arena);
+  SyntaxTree *st = (SyntaxTree *)arena_malloc(&parser->st_arena);
   st->rule_fn = rule_fn;
   st->production_name = production_name;
   st->has_children = false;
@@ -66,20 +66,19 @@ SyntaxTree *parser_create_st(Parser *parser, RuleFn rule_fn,
 
 void parser_delete_st(Parser *parser, SyntaxTree *st) {
   if (st->has_children) {
-    AL_iter iter = alist_riter(&st->children);
-    for (; al_has(&iter); al_inc(&iter)) {
-      SyntaxTree *child = *(SyntaxTree **)al_value(&iter);
+    for (int i = SyntaxTreeArray_size(&st->children) - 1; i >= 0; --i) {
+      SyntaxTree *child = SyntaxTreeArray_get_unchecked(&st->children, i);
       if (&MATCH_EPSILON == child) {
         continue;
       }
       parser_delete_st(parser, child);
     }
-    alist_finalize(&st->children);
+    SyntaxTreeArray_finalize(&st->children);
   }
   if (NULL != st->token) {
-    Q_push(parser->tokens, st->token);
+    TokenArray_push_front(parser->tokens, st->token);
   }
-  __arena_dealloc(&parser->st_arena, st);
+  arena_free(&parser->st_arena, st);
 }
 
 void syntax_tree_add_child(SyntaxTree *st, SyntaxTree *child) {
@@ -87,18 +86,18 @@ void syntax_tree_add_child(SyntaxTree *st, SyntaxTree *child) {
     return;
   }
   if (!st->has_children) {
-    alist_init(&st->children, SyntaxTree *, DEFAULT_ARRAY_SZ);
+    SyntaxTreeArray_init(&st->children);
     st->has_children = true;
   }
-  alist_append(&st->children, &child);
+  SyntaxTreeArray_push_back(&st->children, child);
 }
 
 SyntaxTree *parser_prune_st(Parser *p, SyntaxTree *st) {
-  if (!st->has_children || alist_len(&st->children) > 1) {
+  if (!st->has_children || SyntaxTreeArray_size(&st->children) > 1) {
     return st;
   }
-  SyntaxTree *child = *(SyntaxTree **)alist_get(&st->children, 0);
-  alist_remove_last(&st->children);
+  SyntaxTree *child = SyntaxTreeArray_get_unchecked(&st->children, 0);
+  SyntaxTreeArray_pop_back_unchecked(&st->children);
   parser_delete_st(p, st);
   return child;
 }
@@ -107,12 +106,12 @@ SyntaxTree *match(Parser *parser, RuleFn rule_fn,
                   const char production_name[]) {
   SyntaxTree *st = parser_create_st(parser, rule_fn, production_name);
   st->matched = true;
-  st->token = Q_pop(parser->tokens);
+  st->token = TokenArray_pop_front_unchecked(parser->tokens);
   st->has_children = false;
   return st;
 }
 
-void _print_tabs(FILE *file, int num_tabs) {
+void print_tabs_(FILE *file, int num_tabs) {
   int i;
   for (i = 0; i < num_tabs; i++) {
     fprintf(file, "  ");
@@ -124,7 +123,7 @@ void syntax_tree_print(const SyntaxTree *st, int level, FILE *out) {
     fprintf(out, "NO_MATCH");
     return;
   }
-  _print_tabs(out, level);
+  print_tabs_(out, level);
   if (NULL != st->production_name) {
     fprintf(out, "[%s] ", st->production_name);
   }
@@ -142,13 +141,14 @@ void syntax_tree_print(const SyntaxTree *st, int level, FILE *out) {
     return;
   }
   fprintf(out, "{\n");
-  AL_iter children = alist_iter(&st->children);
-  for (; al_has(&children); al_inc(&children)) {
-    const SyntaxTree *st_child = *(SyntaxTree **)al_value(&children);
+  SyntaxTreeArrayIterator children;
+  SyntaxTreeArray_iterator(&children, &st->children);
+  for (; SyntaxTreeArray_has_next(&children); SyntaxTreeArray_next(&children)) {
+    const SyntaxTree *st_child = *SyntaxTreeArray_value(&children);
     syntax_tree_print(st_child, level + 1, out);
     fprintf(out, "\n");
   }
-  _print_tabs(out, level);
+  print_tabs_(out, level);
   fprintf(out, "}");
 }
 
@@ -157,20 +157,20 @@ SyntaxTree *parser_prune_newlines(Parser *p, SyntaxTree *st) {
     return st;
   }
   int i;
-  for (i = alist_len(&st->children) - 1; i >= 0; --i) {
-    SyntaxTree *st_child = *(SyntaxTree **)alist_get(&st->children, i);
+  for (i = SyntaxTreeArray_size(&st->children) - 1; i >= 0; --i) {
+    SyntaxTree *st_child = SyntaxTreeArray_get_unchecked(&st->children, i);
     if (st_child->has_children) {
-      *(SyntaxTree **)alist_get(&st->children, i) =
+      *SyntaxTreeArray_mutable_ref_unchecked(&st->children, i) =
           parser_prune_newlines(p, st_child);
     } else if (1 /*TOKEN_NEWLINE*/ == st_child->token->type) {
-      __arena_dealloc(&p->st_arena, st_child);
-      alist_remove_at(&st->children, i);
+      arena_free(&p->st_arena, st_child);
+      SyntaxTreeArray_remove_unchecked(&st->children, i);
     }
   }
-  if (1 == alist_len(&st->children)) {
-    SyntaxTree *child = *(SyntaxTree **)alist_get(&st->children, 0);
-    alist_finalize(&st->children);
-    __arena_dealloc(&p->st_arena, st);
+  if (1 == SyntaxTreeArray_size(&st->children)) {
+    SyntaxTree *child = SyntaxTreeArray_get_unchecked(&st->children, 0);
+    SyntaxTreeArray_finalize(&st->children);
+    arena_free(&p->st_arena, st);
     return child;
   }
   return st;

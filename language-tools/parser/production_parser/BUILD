@@ -11,14 +11,13 @@ cc_binary(
     deps = [
         ":production_parser_semantics",
         ":production_rules",
+        "//language-tools:intern",
         "//language-tools/lexer:token",
         "//language-tools/parser:parser_builder",
         "//language-tools/parser/production_lexer",
         "//language-tools/semantic_analyzer",
         "//language-tools/semantic_analyzer:expression_tree",
-        "@c_data_structures//struct:q",
-        "@file_utils//util/file:file_info",
-        "@memory_wrapper//alloc/arena:intern",
+        "@jeffmanzione_file_utils//file-utils:file_info",
     ],
 )
 
@@ -39,10 +38,9 @@ cc_binary(
     name = "production_parser_generator",
     srcs = ["production_parser_generator.c"],
     deps = [
+        "//language-tools:intern",
         "//language-tools/parser:parser_builder",
         "//language-tools/parser/production_lexer",
-        "@memory_wrapper//alloc",
-        "@memory_wrapper//alloc/arena:intern",
     ],
 )
 

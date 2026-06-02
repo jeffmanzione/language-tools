@@ -1,9 +1,8 @@
-#include "alloc/alloc.h"
-#include "alloc/arena/intern.h"
+#include "language-tools/intern.h"
 #include "language-tools/parser/parser_builder.h"
 #include "language-tools/parser/production_lexer/production_lexer.h"
 
-ParserBuilder *_create_parser_builder() {
+ParserBuilder *create_parser_builder_() {
   ParserBuilder *pb = parser_builder_create();
 
   parser_builder_rule(pb, "epsilon", token("KEYWORD_EPSILON"));
@@ -55,12 +54,11 @@ ParserBuilder *_create_parser_builder() {
 }
 
 int main(int argc, const char *argv[]) {
-  alloc_init();
-  intern_init();
+  global_string_intern_pool_init();
 
   bool header = 0 == strcmp("header", argv[1]);
 
-  ParserBuilder *pb = _create_parser_builder();
+  ParserBuilder *pb = create_parser_builder_();
 
   if (header) {
     parser_builder_write_h_file(pb, stdout);
@@ -68,9 +66,11 @@ int main(int argc, const char *argv[]) {
     parser_builder_write_c_file(pb, argv[2], argv[3], stdout);
   }
 
-  parser_builder_delete(pb);
+  // Below code not necessary as the program will immediately free all memory
+  // upon exit.
 
-  intern_finalize();
-  alloc_finalize();
+  //   parser_builder_delete(pb);
+  //   global_string_intern_pool_finalize();
+
   return 0;
 }

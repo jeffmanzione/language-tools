@@ -1,23 +1,19 @@
-#include "alloc/alloc.h"
-#include "alloc/arena/intern.h"
-#include "debug/debug.h"
 #include "examples/lisp/lisp_lexer.h"
 #include "examples/lisp/lisp_parser.h"
 #include "examples/lisp/semantics.h"
+#include "file-utils/file_info.h"
+#include "file-utils/sfile.h"
+#include "language-tools/intern.h"
 #include "language-tools/lexer/token.h"
-#include "struct/q.h"
-#include "util/file/file_info.h"
-#include "util/file/sfile.h"
 
 int main(int argc, const char *args[]) {
-  alloc_init();
-  intern_init();
+  global_string_intern_pool_init();
 
   FileInfo *file = file_info_file(stdin);
 
   while (true) {
-    Q tokens;
-    Q_init(&tokens);
+    TokenArray tokens;
+    TokenArray_init(&tokens);
 
     printf("> ");
 
@@ -43,12 +39,13 @@ int main(int argc, const char *args[]) {
 
     parser_delete_st(&parser, stree);
     parser_finalize(&parser);
-    Q_finalize(&tokens);
+    TokenArray_finalize(&tokens);
   }
 
-  file_info_delete(file);
+  // Below code not necessary as the program will immediately free all memory
+  // upon exit.
 
-  token_finalize_all();
-  intern_finalize();
-  alloc_finalize();
+  // file_info_delete(file);
+  // token_finalize_all();
+  // global_string_intern_pool_finalize();
 }

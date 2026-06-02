@@ -1,28 +1,31 @@
 #ifndef COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_PARSER_PARSER_H_
 #define COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_PARSER_PARSER_H_
 
-#include "alloc/arena/arena.h"
-#include "language-tools/lexer/token.h"
-#include "struct/alist.h"
-#include "struct/q.h"
+#include <stdio.h>
 
-typedef struct _SyntaxTree SyntaxTree;
+#include "c-data-structures/arraylike.h"
+#include "language-tools/lexer/token.h"
+#include "rzalloc/rzalloc.h"
+
+typedef struct SyntaxTree_ SyntaxTree;
 typedef struct _Parser Parser;
 
 typedef SyntaxTree *(*RuleFn)(Parser *parser);
 
-struct _SyntaxTree {
+DEFINE_ARRAYLIKE(SyntaxTreeArray, SyntaxTree *);
+
+struct SyntaxTree_ {
   RuleFn rule_fn;
   const char *production_name;
   bool matched, has_children;
   Token *token;
-  AList children;
+  SyntaxTreeArray children;
 };
 
 struct _Parser {
-  __Arena st_arena;
+  RzallocArena st_arena;
   RuleFn root;
-  Q *tokens;
+  TokenArray *tokens;
   bool ignore_newline;
 };
 
@@ -30,7 +33,7 @@ extern SyntaxTree NO_MATCH;
 extern SyntaxTree MATCH_EPSILON;
 
 void parser_init(Parser *parser, RuleFn root, bool ignore_newline);
-SyntaxTree *parser_parse(Parser *parser, Q *tokens);
+SyntaxTree *parser_parse(Parser *parser, TokenArray *tokens);
 void parser_finalize(Parser *parser);
 Token *parser_next(Parser *parser);
 SyntaxTree *parser_create_st(Parser *parser, RuleFn rule_fn,

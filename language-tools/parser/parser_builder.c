@@ -2,13 +2,25 @@
 
 #include <stdarg.h>
 
-#include "alloc/alloc.h"
-#include "alloc/arena/intern.h"
-#include "debug/debug.h"
-#include "struct/alist.h"
-#include "struct/map.h"
-#include "struct/struct_defaults.h"
-#include "util/string.h"
+#include "c-data-structures/arraylike.h"
+#include "c-data-structures/maplike.h"
+#include "file-utils/string_utils.h"
+#include "language-tools/intern.h"
+
+DEFINE_ARRAYLIKE(ProductionArray, Production *);
+IMPL_ARRAYLIKE(ProductionArray, Production *);
+
+DEFINE_MAPLIKE(ProductionMap, char *, Production *);
+IMPL_MAPLIKE(ProductionMap, char *, Production *);
+
+uint32_t string_ptr_hasher_(const char *ptr, uint32_t size) {
+  return (uint32_t)(intptr_t)ptr;
+}
+
+int32_t string_ptr_comparator_(const char *ptr1, uint32_t ptr1_len,
+                               const char *ptr2, uint32_t ptr2_len) {
+  return ((intptr_t)ptr1) - ((intptr_t)ptr2);
+}
 
 // Hardcoded in lexer.
 #define TOKEN_NEWLINE 1
@@ -22,108 +34,109 @@ typedef enum {
   PRODUCTION_OPTIONAL
 } ProductionType;
 
-typedef struct _Production {
+typedef struct Production_ {
   ProductionType type;
   union {
-    AList children;
+    ProductionArray children;
     const char *token;
-    char *rule_name;
+    const char *rule_name;
   };
 } Production;
 
-typedef struct _ParserBuilder {
-  Map rules;
+typedef struct ParserBuilder_ {
+  ProductionMap rules;
 } ParserBuilder;
 
-Production *_production_create(ProductionType type) {
-  Production *pb = ALLOC2(Production);
+Production *production_create_(ProductionType type) {
+  Production *pb = malloc(sizeof(Production));
   pb->type = type;
   return pb;
 }
 
-void _production_delete(Production *p) {
+void production_delete_(Production *p) {
   if (p->type == PRODUCTION_OR || p->type == PRODUCTION_AND) {
-    AL_iter iter = alist_iter(&p->children);
-    for (; al_has(&iter); al_inc(&iter)) {
-      _production_delete(*((Production **)al_value(&iter)));
+    ProductionArrayIterator iter;
+    ProductionArray_iterator(&iter, &p->children);
+    for (; ProductionArray_has_next(&iter); ProductionArray_next(&iter)) {
+      production_delete_(*ProductionArray_mutable_value(&iter));
     }
-    alist_finalize(&p->children);
+    ProductionArray_finalize(&p->children);
   }
-  DEALLOC(p);
+  free(p);
 }
 
-Production *_production_multi_helper(ProductionType type) {
-  Production *p = _production_create(type);
-  alist_init(&p->children, Production *, DEFAULT_ARRAY_SZ);
+Production *production_multi_helper_(ProductionType type) {
+  Production *p = production_create_(type);
+  ProductionArray_init(&p->children);
   return p;
 }
 
 Production *production_and() {
-  return _production_multi_helper(PRODUCTION_AND);
+  return production_multi_helper_(PRODUCTION_AND);
 }
 
-Production *production_or() { return _production_multi_helper(PRODUCTION_OR); }
+Production *production_or() { return production_multi_helper_(PRODUCTION_OR); }
 
 void production_add_child(Production *parent, Production *child) {
-  alist_append(&parent->children, &child);
+  ProductionArray_push_back(&parent->children, child);
 }
 
-Production *_production_multi(ProductionType type, int arg_count,
+Production *production_multi_(ProductionType type, int arg_count,
                               va_list valist) {
-  Production *p = _production_multi_helper(type);
+  Production *p = production_multi_helper_(type);
   int i;
   for (i = 0; i < arg_count; i++) {
     Production *exp = va_arg(valist, Production *);
-    alist_append(&p->children, &exp);
+    ProductionArray_push_back(&p->children, exp);
   }
   va_end(valist);
   return p;
 }
 
-Production *__or(int arg_count, ...) {
+Production *or__(int arg_count, ...) {
   va_list valist;
   va_start(valist, arg_count);
-  return _production_multi(PRODUCTION_OR, arg_count, valist);
+  return production_multi_(PRODUCTION_OR, arg_count, valist);
 }
 
-Production *__and(int arg_count, ...) {
+Production *and__(int arg_count, ...) {
   va_list valist;
   va_start(valist, arg_count);
-  return _production_multi(PRODUCTION_AND, arg_count, valist);
+  return production_multi_(PRODUCTION_AND, arg_count, valist);
 }
 
 Production *token(const char token[]) {
-  Production *p = _production_create(PRODUCTION_TOKEN);
+  Production *p = production_create_(PRODUCTION_TOKEN);
   p->token = token;
   return p;
 }
 
 Production *optional(Production *p_child) {
-  Production *p = _production_create(PRODUCTION_OPTIONAL);
-  alist_init(&p->children, Production *, DEFAULT_ARRAY_SZ);
-  alist_append(&p->children, &p_child);
+  Production *p = production_create_(PRODUCTION_OPTIONAL);
+  ProductionArray_init(&p->children);
+  ProductionArray_push_back(&p->children, p_child);
   return p;
 }
 
 Production *newline() { return token("TOKEN_NEWLINE"); }
 
 Production *line(Production *p) {
-  Production *p_parent = _production_multi(PRODUCTION_AND, 0, NULL);
-  alist_append(&p_parent->children, &p);
+  Production *p_parent = production_multi_(PRODUCTION_AND, 0, NULL);
+  ProductionArray_push_back(&p_parent->children, p);
   Production *nl = newline();
-  alist_append(&p_parent->children, &nl);
+  ProductionArray_push_back(&p_parent->children, nl);
   return p_parent;
 }
 
-Production *epsilon() { return _production_create(PRODUCTION_EPSILON); }
+Production *epsilon() { return production_create_(PRODUCTION_EPSILON); }
 
 Production *rule(const char rule_name[]) {
-  Production *p = _production_create(PRODUCTION_RULE);
-  p->rule_name = intern(rule_name);
+  Production *p = production_create_(PRODUCTION_RULE);
+  p->rule_name = global_intern(rule_name);
   return p;
 }
 
-void _production_print(const Production *p, FILE *out) {
+void production_print_(const Production *p, FILE *out) {
   switch (p->type) {
     case PRODUCTION_EPSILON:
       fprintf(out, "E");
@@ -138,61 +151,65 @@ void _production_print(const Production *p, FILE *out) {
       break;
   }
   // Must be AND or OR.
-  AL_iter iter = alist_iter(&p->children);
+  ProductionArrayIterator iter;
+  ProductionArray_iterator(&iter, &p->children);
   const char *production_type = PRODUCTION_AND == p->type  ? "AND"
                                 : PRODUCTION_OR == p->type ? "OR"
                                                            : "OPTIONAL";
   fprintf(out, "%s(", production_type);
-  _production_print(*(Production **)al_value(&iter), out);
-  al_inc(&iter);
-  for (; al_has(&iter); al_inc(&iter)) {
+  production_print_(*ProductionArray_value(&iter), out);
+  ProductionArray_next(&iter);
+  for (; ProductionArray_has_next(&iter); ProductionArray_next(&iter)) {
     fprintf(out, ", ");
-    _production_print(*(Production **)al_value(&iter), out);
+    production_print_(*ProductionArray_value(&iter), out);
   }
   fprintf(out, ")");
 }
 
 ParserBuilder *parser_builder_create() {
-  ParserBuilder *pb = ALLOC2(ParserBuilder);
-  map_init_default(&pb->rules);
+  ParserBuilder *pb = malloc(sizeof(ParserBuilder));
+  ProductionMap_init(&pb->rules, string_ptr_hasher_, string_ptr_comparator_);
   return pb;
 }
 
 void parser_builder_rule(ParserBuilder *pb, const char rule_name[],
                          Production *p) {
-  const char *interned_rule_name = intern(rule_name);
-  if (NULL != map_lookup(&pb->rules, interned_rule_name)) {
-    FATALF("Multiple rules with name '%s'.", rule_name);
+  const char *interned_rule_name = global_intern(rule_name);
+  if (NULL != ProductionMap_find(&pb->rules, interned_rule_name, sizeof(char *),
+                                 NULL)) {
+    fprintf(stderr, "Multiple rules with name '%s'.", rule_name);
+    exit(1);
   }
-  map_insert(&pb->rules, interned_rule_name, p);
+  ProductionMap_insert(&pb->rules, interned_rule_name, sizeof(char *), p);
 }
 
 void parser_builder_delete(ParserBuilder *pb) {
-  M_iter iter = map_iter(&pb->rules);
-  for (; has(&iter); inc(&iter)) {
-    _production_delete(value(&iter));
+  ProductionMapIterator iter;
+  ProductionMap_iterator(&iter, &pb->rules);
+  for (; ProductionMap_has_entry(&iter); ProductionMap_next_entry(&iter)) {
+    production_delete_(*ProductionMap_mutable_value(&iter));
   }
-  map_finalize(&pb->rules);
-  DEALLOC(pb);
+  ProductionMap_finalize(&pb->rules);
+  free(pb);
 }
 
-const char *_create_rule_function_name(const char *production_name) {
+const char *create_rule_function_name_(const char *production_name) {
   char buffer[128];
   int len = sprintf(buffer, "rule_%s", production_name);
-  return intern_range(buffer, 0, len);
+  return global_intern_range(buffer, 0, len);
 }
 
-void _write_rule_signature(const char *production_name, const Production *p,
+void write_rule_signature_(const char *production_name, const Production *p,
                            bool is_named_rule, FILE *file) {
   // if (!is_named_rule) {
   //   fprintf(file, "inline ");
   // }
   fprintf(file, "SyntaxTree *");
-  fprintf(file, "%s", _create_rule_function_name(production_name));
+  fprintf(file, "%s", create_rule_function_name_(production_name));
   fprintf(file, "(Parser *parser)");
 }
 
-const char *_suffix_for(const Production *p) {
+const char *suffix_for_(const Production *p) {
   return PRODUCTION_TOKEN == p->type      ? "token"
          : PRODUCTION_AND == p->type      ? "and"
          : PRODUCTION_OR == p->type       ? "or"
@@ -200,28 +217,29 @@ const char *_suffix_for(const Production *p) {
                                           : NULL;
 }
 
-void _print_child_function_call(const char *production_name,
+void print_child_function_call_(const char *production_name,
                                 const Production *p, FILE *file) {
   if (PRODUCTION_AND == p->type || PRODUCTION_OR == p->type ||
       PRODUCTION_TOKEN == p->type || PRODUCTION_OPTIONAL == p->type) {
     fprintf(file, "%s(parser);\n",
-            (char *)_create_rule_function_name(production_name));
+            (char *)create_rule_function_name_(production_name));
   } else if (PRODUCTION_RULE == p->type) {
     fprintf(file, "rule_%s(parser);\n", p->rule_name);
   } else if (PRODUCTION_EPSILON == p->type) {
     fprintf(file, "&MATCH_EPSILON;\n");
   } else {
-    FATALF("Unexpected production type: %d.", p->type);
+    fprintf(stderr, "Unexpected production type: %d.", p->type);
+    exit(1);
   }
 }
 
-const char *_production_name_with_child_suffix(const char *production_name,
+const char *production_name_with_child_suffix_(const char *production_name,
                                                const Production *p,
                                                int child_index) {
   char buffer[128];
   int len =
-      sprintf(buffer, "%s__%s%d", production_name, _suffix_for(p), child_index);
-  return intern_range(buffer, 0, len);
+      sprintf(buffer, "%s__%s%d", production_name, suffix_for_(p), child_index);
+  return global_intern_range(buffer, 0, len);
 }
 
 bool _is_helper_rule(const char production_name[]) {
@@ -239,21 +257,22 @@ void _write_and_body(const char *production_name, const Production *p,
             production_name, production_name);
   }
   int child_index = -1;
-  AL_iter children = alist_iter(&p->children);
-  for (; al_has(&children); al_inc(&children)) {
+  ProductionArrayIterator children;
+  ProductionArray_iterator(&children, &p->children);
+  for (; ProductionArray_has_next(&children); ProductionArray_next(&children)) {
     ++child_index;
-    const Production *p_child = *(Production **)al_value(&children);
+    const Production *p_child = *ProductionArray_value(&children);
     fprintf(file, "  {\n    SyntaxTree *st_child = ");
 
     if (PRODUCTION_OPTIONAL == p_child->type) {
-      _print_child_function_call(_production_name_with_child_suffix(
+      print_child_function_call_(production_name_with_child_suffix_(
                                      production_name, p_child, child_index),
                                  p_child, file);
       fprintf(file, "    if (st_child->matched) {\n");
       fprintf(file,
               "       syntax_tree_add_child(st, st_child);\n    }\n  }\n");
     } else {
-      _print_child_function_call(_production_name_with_child_suffix(
+      print_child_function_call_(production_name_with_child_suffix_(
                                      production_name, p_child, child_index),
                                  p_child, file);
       fprintf(file, "    if (!st_child->matched) {\n");
@@ -272,12 +291,13 @@ void _write_and_body(const char *production_name, const Production *p,
 void _write_or_body(const char *production_name, const Production *p,
                     FILE *file) {
   int child_index = -1;
-  AL_iter children = alist_iter(&p->children);
-  for (; al_has(&children); al_inc(&children)) {
+  ProductionArrayIterator children;
+  ProductionArray_iterator(&children, &p->children);
+  for (; ProductionArray_has_next(&children); ProductionArray_next(&children)) {
     ++child_index;
-    const Production *p_child = *(Production **)al_value(&children);
+    const Production *p_child = *ProductionArray_value(&children);
     fprintf(file, "  {\n    SyntaxTree *st_child = ");
-    _print_child_function_call(_production_name_with_child_suffix(
+    print_child_function_call_(production_name_with_child_suffix_(
                                    production_name, p_child, child_index),
                                p_child, file);
     fprintf(file, "    if (st_child->matched) {\n");
@@ -295,25 +315,27 @@ void _write_rule_and_subrules(const char *production_name, const Production *p,
                               bool is_named_rule, FILE *file) {
   if (PRODUCTION_AND == p->type || PRODUCTION_OR == p->type) {
     int child_index = -1;
-    AL_iter children = alist_iter(&p->children);
-    for (; al_has(&children); al_inc(&children)) {
+    ProductionArrayIterator children;
+    ProductionArray_iterator(&children, &p->children);
+    for (; ProductionArray_has_next(&children);
+         ProductionArray_next(&children)) {
       ++child_index;
-      const Production *p_child = *(Production **)al_value(&children);
+      const Production *p_child = *ProductionArray_value(&children);
       if (PRODUCTION_EPSILON == p_child->type ||
           PRODUCTION_RULE == p_child->type) {
         continue;
       }
-      _write_rule_and_subrules(_production_name_with_child_suffix(
+      _write_rule_and_subrules(production_name_with_child_suffix_(
                                    production_name, p_child, child_index),
                                p_child, false, file);
     }
   }
   if (PRODUCTION_OPTIONAL == p->type) {
-    p = *(Production **)alist_get(&p->children, 0);
+    p = ProductionArray_get_unchecked(&p->children, 0);
     _write_rule_and_subrules(production_name, p, is_named_rule, file);
     return;
   }
-  _write_rule_signature(production_name, p, is_named_rule, file);
+  write_rule_signature_(production_name, p, is_named_rule, file);
 
   fprintf(file, " {\n");
   if (PRODUCTION_AND == p->type) {
@@ -338,7 +360,8 @@ void _write_rule_and_subrules(const char *production_name, const Production *p,
   } else if (PRODUCTION_EPSILON == p->type) {
     fprintf(file, "  return &MATCH_EPSILON;\n");
   } else {
-    FATALF("Unexpected production type: %d.", p->type);
+    fprintf(stderr, "Unexpected production type: %d.", p->type);
+    exit(1);
   }
   fprintf(file, "}\n\n");
 }
@@ -355,10 +378,11 @@ void _write_headers(ParserBuilder *pb, FILE *file, const char h_file_path[],
 void parser_builder_write_c_file(ParserBuilder *pb, const char h_file_path[],
                                  const char lexer_h_file_path[], FILE *file) {
   _write_headers(pb, file, h_file_path, lexer_h_file_path);
-  M_iter rules = map_iter(&pb->rules);
-  for (; has(&rules); inc(&rules)) {
-    const char *production_name = (const char *)key(&rules);
-    const Production *p = (Production *)value(&rules);
+  ProductionMapIterator rules;
+  ProductionMap_iterator(&rules, &pb->rules);
+  for (; ProductionMap_has_entry(&rules); ProductionMap_next_entry(&rules)) {
+    const char *production_name = ProductionMap_key(&rules);
+    const Production *p = *ProductionMap_value(&rules);
     _write_rule_and_subrules(production_name, p, true, file);
   }
 }
@@ -372,16 +396,17 @@ void parser_builder_write_h_file(ParserBuilder *pb, FILE *file) {
       "#define COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_PARSER_TODO_THIS_H_\n\n");
   fprintf(file, "#include \"language-tools/parser/parser.h\"\n");
   fprintf(file, "\n");
-  M_iter rules = map_iter(&pb->rules);
-  for (; has(&rules); inc(&rules)) {
-    const char *production_name = (const char *)key(&rules);
-    const Production *p = (const Production *)value(&rules);
+  ProductionMapIterator rules;
+  ProductionMap_iterator(&rules, &pb->rules);
+  for (; ProductionMap_has_entry(&rules); ProductionMap_next_entry(&rules)) {
+    const char *production_name = ProductionMap_key(&rules);
+    const Production *p = *ProductionMap_value(&rules);
 
     fprintf(file, "// %s -> ", production_name);
-    _production_print(p, file);
+    production_print_(p, file);
     fprintf(file, ";\n");
 
-    _write_rule_signature(production_name, p, true, file);
+    write_rule_signature_(production_name, p, true, file);
     fprintf(file, ";\n");
   }
   fprintf(file,
@@ -390,10 +415,11 @@ void parser_builder_write_h_file(ParserBuilder *pb, FILE *file) {
 }
 
 void parser_builder_print(ParserBuilder *pb, FILE *out) {
-  M_iter iter = map_iter(&pb->rules);
-  for (; has(&iter); inc(&iter)) {
-    fprintf(out, "%s -> ", (char *)key(&iter));
-    _production_print((Production *)value(&iter), out);
+  ProductionMapIterator iter;
+  ProductionMap_iterator(&iter, &pb->rules);
+  for (; ProductionMap_has_entry(&iter); ProductionMap_next_entry(&iter)) {
+    fprintf(out, "%s -> ", ProductionMap_key(&iter));
+    production_print_(*ProductionMap_value(&iter), out);
     fprintf(out, ";\n");
   }
 }

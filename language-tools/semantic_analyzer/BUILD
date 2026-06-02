@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -6,15 +6,13 @@ package(
 
 cc_library(
     name = "expression_tree",
+    srcs = ["expression_tree.c"],
     hdrs = ["expression_tree.h"],
     deps = [
         "//language-tools/lexer:token",
         "//language-tools/parser",
-        "@c_data_structures//struct:alist",
-        "@memory_wrapper//alloc",
-        "@memory_wrapper//debug",
-        "@memory_wrapper//struct:map",
-        "@memory_wrapper//struct:struct_defaults",
+        "@jeffmanzione_c_data_structures//c-data-structures:arraylike",
+        "@jeffmanzione_c_data_structures//c-data-structures:maplike",
     ],
 )
 
@@ -25,8 +23,5 @@ cc_library(
     deps = [
         ":expression_tree",
         "//language-tools/parser",
-        "@memory_wrapper//debug",
-        "@memory_wrapper//struct:map",
-        "@memory_wrapper//struct:struct_defaults",
     ],
 )

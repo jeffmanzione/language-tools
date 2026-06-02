@@ -1,2 +1,2 @@
 common --registry=https://bcr.bazel.build
-common --registry=http://localhost:8080
+common --registry=https://raw.githubusercontent.com/jeffmanzione/bazel-registry/refs/heads/main/

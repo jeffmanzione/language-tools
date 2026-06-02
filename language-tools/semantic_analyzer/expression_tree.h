@@ -1,20 +1,26 @@
-#ifndef COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_SEMANTIC_ANALYZER_EXPRESSION_TREE_H_
-#define COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_SEMANTIC_ANALYZER_EXPRESSION_TREE_H_
+#ifndef COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_SA_EXPRESSION_TREE_H_
+#define COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_SA_EXPRESSION_TREE_H_
 
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "debug/debug.h"
+#include "c-data-structures/arraylike.h"
+#include "c-data-structures/maplike.h"
 #include "language-tools/lexer/token.h"
 #include "language-tools/parser/parser.h"
-#include "struct/alist.h"
-#include "struct/map.h"
 
 typedef struct {
   RuleFn type;
   const char *rule_name;
   void *expression;
 } ExpressionTree;
+
+DEFINE_ARRAYLIKE(ExpressionTreeArray, ExpressionTree *);
+DEFINE_MAPLIKE(SAMap, void *, void *);
+
+uint32_t SAMap_ptr_hasher(const void *ptr, uint32_t size);
+int32_t SAMap_ptr_comparator(const void *ptr1, uint32_t ptr1_len,
+                             const void *ptr2, uint32_t ptr2_len);
 
 #define _GET_MACRO(_1, _2, NAME) NAME
 #define DEFINE_EXPRESSION(...)                             \
@@ -50,10 +56,10 @@ typedef struct {
 
 #define POPULATE_IMPL(name, stree_input, analyzer_input)         \
   ExpressionTree *Populate_##name(stree_input, analyzer_input) { \
-    ExpressionTree *etree = ALLOC2(ExpressionTree);              \
+    ExpressionTree *etree = malloc(sizeof(ExpressionTree));      \
     etree->type = rule_##name;                                   \
     etree->rule_name = #name;                                    \
-    etree->expression = ALLOC(Expression_##name);                \
+    etree->expression = calloc(1, sizeof(Expression_##name));    \
     Transform_##name(stree, etree->expression, analyzer);        \
     return etree;                                                \
   }                                                              \
@@ -76,22 +82,23 @@ typedef struct {
 #define REGISTRATION_FN(name) \
   void name(Map *populators, Map *producers, Map *deleters)
 
-#define REGISTER_EXPRESSION(name)                         \
-  {                                                       \
-    map_insert(populators, rule_##name, Populate_##name); \
-    map_insert(deleters, rule_##name, Delete_##name);     \
+#define REGISTER_EXPRESSION(name)                                              \
+  {                                                                            \
+    SAMap_insert(populators, rule_##name, sizeof(Populator), Populate_##name); \
+    SAMap_insert(deleters, rule_##name, sizeof(EDeleter), Delete_##name);      \
   }
 
-#define REGISTER_EXPRESSION_WITH_PRODUCER(name)           \
-  {                                                       \
-    map_insert(populators, rule_##name, Populate_##name); \
-    map_insert(producers, rule_##name, Produce_##name);   \
-    map_insert(deleters, rule_##name, Delete_##name);     \
+#define REGISTER_EXPRESSION_WITH_PRODUCER(name)                                \
+  {                                                                            \
+    SAMap_insert(populators, rule_##name, sizeof(Populator), Populate_##name); \
+    SAMap_insert(producers, rule_##name, sizeof(Producers), Produce_##name);   \
+    SAMap_insert(deleters, rule_##name, sizeof(EDeleter), Delete_##name);      \
   }
 
-#define EXPECT_TYPE(stree, type)     \
-  if (stree->rule_fn != type) {      \
-    FATALF("Expected type: " #type); \
+#define EXPECT_TYPE(stree, type)              \
+  if (stree->rule_fn != type) {               \
+    fprintf(stderr, "Expected type: " #type); \
+    exit(1);                                  \
   }
 
 #define IS_SYNTAX(stree, type) (((stree)->rule_fn) == (type))
@@ -104,9 +111,9 @@ typedef struct {
 #define TOKEN_TEXT_FOR(stree) \
   (((NULL != (stree)) && (NULL != (stree->token))) ? stree->token->text : NULL)
 
-#define CHILD_SYNTAX_AT(stree, index)                           \
-  (alist_len(&(stree)->children) > (index)                      \
-       ? *(SyntaxTree **)alist_get(&(stree)->children, (index)) \
+#define CHILD_SYNTAX_AT(stree, index)                               \
+  (SyntaxTreeArray_size(&(stree)->children) > (index)               \
+       ? SyntaxTreeArray_get_unchecked(&(stree)->children, (index)) \
        : NULL)
 
 #define CHILD_IS_SYNTAX(stree, index, type) \
@@ -117,7 +124,7 @@ typedef struct {
 #define CHILD_IS_TOKEN(stree, index, token_type) \
   IS_TOKEN(CHILD_SYNTAX_AT((stree), (index)), (token_type))
 
-#define CHILD_COUNT(stree) (alist_len(&(stree)->children))
+#define CHILD_COUNT(stree) (SyntaxTreeArray_size(&(stree)->children))
 
 #define IS_EXPRESSION(etree, typ) \
   ((NULL != (etree)) && ((rule_##typ) == (etree)->type))
@@ -126,33 +133,34 @@ typedef struct {
   (IS_EXPRESSION((etree), type) ? ((Expression_##type *)(etree)->expression) \
                                 : NULL)
 
-#define APPEND_TREE(sa, alist_of_tree, stree)                     \
+#define APPEND_TREE(sa, list_of_tree, stree)                      \
   {                                                               \
     ExpressionTree *expr = semantic_analyzer_populate(sa, stree); \
-    alist_append(alist_of_tree, (void *)&expr);                   \
+    ExpressionTreeArray_push_back(list_of_tree, expr);            \
   }
 
-#define EXTRACT_TREE(alist_of_tree, i) __extract_tree(alist_of_tree, i)
+#define EXTRACT_TREE(list_of_tree, i) extract_tree__(list_of_tree, i)
 
-#define DECLARE_IF_TYPE(name, type, stree)     \
-  SyntaxTree *name;                            \
-  {                                            \
-    if (stree->rule_fn != type) {              \
-      FATALF("Expected " #type " for " #name); \
-      name = NULL;                             \
-    } else {                                   \
-      name = stree;                            \
-    }                                          \
+#define DECLARE_IF_TYPE(name, type, stree)              \
+  SyntaxTree *name;                                     \
+  {                                                     \
+    if (stree->rule_fn != type) {                       \
+      fprintf(stderr, "Expected " #type " for " #name); \
+      exit(1);                                          \
+      name = NULL;                                      \
+    } else {                                            \
+      name = stree;                                     \
+    }                                                   \
   }
 
-#define ASSIGN_IF_TYPE(name, type, stree)      \
-  {                                            \
-    if (stree->rule_fn != type) {              \
-      FATALF("Expected " #type " for " #name); \
-    } else {                                   \
-      name = stree;                            \
-    }                                          \
+#define ASSIGN_IF_TYPE(name, type, stree)               \
+  {                                                     \
+    if (stree->rule_fn != type) {                       \
+      fprintf(stderr, "Expected " #type " for " #name); \
+      exit(1);                                          \
+    } else {                                            \
+      name = stree;                                     \
+    }                                                   \
   }
 
-#endif /* COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_SEMANTIC_ANALYZER_EXPRESSION_TREE_H_ \
-        */
+#endif /* COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_SA_EXPRESSION_TREE_H_ */

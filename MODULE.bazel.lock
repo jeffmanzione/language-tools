@@ -1,11 +1,6 @@
 {
   "lockFileVersion": 18,
   "registryFileHashes": {
-    "http://localhost:8080/bazel_registry.json": "c8629eef5c67a70971adcbe811015c0b227084bf28fc5c8bc5562e8eb8d52fa4",
-    "http://localhost:8080/modules/jeffmanzione_c_data_structures/1.0.0/MODULE.bazel": "e6383b4686f3a2d88b50ba23fc8d5677dc55f4771b93460dfbff445b87f5b6b7",
-    "http://localhost:8080/modules/jeffmanzione_c_data_structures/1.0.0/source.json": "cb6ab19f5a96244a1ab39251419c5a5b78b15368c7ca19f6da3d44a9c4d1347b",
-    "http://localhost:8080/modules/jeffmanzione_file_utils/1.0.0/MODULE.bazel": "309db46736a1f43d803020d4ed8a3314e69989ee5cdadfe64412800216f93962",
-    "http://localhost:8080/modules/jeffmanzione_file_utils/1.0.0/source.json": "bbbfd5ef31218d0fe7087f91fbd72bfdb7cd6f1dc58ee0c197ac77710f0368e7",
     "https://bcr.bazel.build/bazel_registry.json": "8a28e4aff06ee60aed2a8c281907fb8bcbf3b753c91fb5a5c57da3215d5b3497",
     "https://bcr.bazel.build/modules/abseil-cpp/20210324.2/MODULE.bazel": "7cd0312e064fde87c8d1cd79ba06c876bd23630c83466e9500321be55c96ace2",
     "https://bcr.bazel.build/modules/abseil-cpp/20211102.0/MODULE.bazel": "70390338f7a5106231d20620712f7cccb659cd0e9d073d1991c038eb9fc57589",
@@ -60,7 +55,7 @@
     "https://bcr.bazel.build/modules/googletest/1.17.0.bcr.2/MODULE.bazel": "827f54f492a3ce549c940106d73de332c2b30cebd0c20c0bc5d786aba7f116cb",
     "https://bcr.bazel.build/modules/googletest/1.17.0.bcr.2/source.json": "3664514073a819992320ffbce5825e4238459df344d8b01748af2208f8d2e1eb",
     "https://bcr.bazel.build/modules/googletest/1.17.0/MODULE.bazel": "dbec758171594a705933a29fcf69293d2468c49ec1f2ebca65c36f504d72df46",
-    "https://bcr.bazel.build/modules/jeffmanzione_c_data_structures/1.0.0/MODULE.bazel": "not found",
+    "https://bcr.bazel.build/modules/jeffmanzione_c_data_structures/1.0.3/MODULE.bazel": "not found",
     "https://bcr.bazel.build/modules/jeffmanzione_file_utils/1.0.0/MODULE.bazel": "not found",
     "https://bcr.bazel.build/modules/jeffmanzione_intern/1.0.2/MODULE.bazel": "42e41a19a2c0c564939518c2fb84fd60c22e51e0f1dd4ce277d4d5a0c89d75d7",
     "https://bcr.bazel.build/modules/jeffmanzione_intern/1.0.2/source.json": "5205dd703d4b7d2f50d5fea1892791e12732ada8e7c68306e382219d94b1eda9",
@@ -185,7 +180,12 @@
     "https://bcr.bazel.build/modules/zlib/1.2.11/MODULE.bazel": "07b389abc85fdbca459b69e2ec656ae5622873af3f845e1c9d80fe179f3effa0",
     "https://bcr.bazel.build/modules/zlib/1.3.1.bcr.5/MODULE.bazel": "eec517b5bbe5492629466e11dae908d043364302283de25581e3eb944326c4ca",
     "https://bcr.bazel.build/modules/zlib/1.3.1.bcr.5/source.json": "22bc55c47af97246cfc093d0acf683a7869377de362b5d1c552c2c2e16b7a806",
-    "https://bcr.bazel.build/modules/zlib/1.3.1/MODULE.bazel": "751c9940dcfe869f5f7274e1295422a34623555916eb98c174c1e945594bf198"
+    "https://bcr.bazel.build/modules/zlib/1.3.1/MODULE.bazel": "751c9940dcfe869f5f7274e1295422a34623555916eb98c174c1e945594bf198",
+    "https://raw.githubusercontent.com/jeffmanzione/bazel-registry/refs/heads/main/bazel_registry.json": "c8629eef5c67a70971adcbe811015c0b227084bf28fc5c8bc5562e8eb8d52fa4",
+    "https://raw.githubusercontent.com/jeffmanzione/bazel-registry/refs/heads/main/modules/jeffmanzione_c_data_structures/1.0.3/MODULE.bazel": "20589582574ccc7574392f13d000a818387722333f9b8a7023bb619a32b3452b",
+    "https://raw.githubusercontent.com/jeffmanzione/bazel-registry/refs/heads/main/modules/jeffmanzione_c_data_structures/1.0.3/source.json": "ecab81704662931efddb734b23a9328196552e364051d52f65124b0f87ad173e",
+    "https://raw.githubusercontent.com/jeffmanzione/bazel-registry/refs/heads/main/modules/jeffmanzione_file_utils/1.0.0/MODULE.bazel": "309db46736a1f43d803020d4ed8a3314e69989ee5cdadfe64412800216f93962",
+    "https://raw.githubusercontent.com/jeffmanzione/bazel-registry/refs/heads/main/modules/jeffmanzione_file_utils/1.0.0/source.json": "bbbfd5ef31218d0fe7087f91fbd72bfdb7cd6f1dc58ee0c197ac77710f0368e7"
   },
   "selectedYankedVersions": {},
   "moduleExtensions": {

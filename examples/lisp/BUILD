@@ -1,7 +1,7 @@
-load("@language-tools//language-tools/lexer:lexer_builder.bzl", "lexer_builder")
-load("@language-tools//language-tools/parser:parser_builder.bzl", "parser_builder")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("//language-tools/lexer:lexer_builder.bzl", "lexer_builder")
+load("//language-tools/parser:parser_builder.bzl", "parser_builder")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -41,16 +41,13 @@ cc_binary(
         ":lisp_lexer",
         ":lisp_parser",
         ":lisp_semantics",
+        "//language-tools:intern",
         "//language-tools/lexer:token",
         "//language-tools/parser",
         "//language-tools/parser/production_lexer",
         "//language-tools/semantic_analyzer",
         "//language-tools/semantic_analyzer:expression_tree",
-        "@c_data_structures//struct:q",
-        "@file_utils//util/file:file_info",
-        "@file_utils//util/file:sfile",
-        "@memory_wrapper//alloc",
-        "@memory_wrapper//alloc/arena:intern",
-        "@memory_wrapper//debug",
+        "@jeffmanzione_file_utils//file-utils:file_info",
+        "@jeffmanzione_file_utils//file-utils:sfile",
     ],
 )

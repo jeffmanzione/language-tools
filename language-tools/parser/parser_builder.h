@@ -3,8 +3,8 @@
 
 #include <stdio.h>
 
-typedef struct _ParserBuilder ParserBuilder;
-typedef struct _Production Production;
+typedef struct ParserBuilder_ ParserBuilder;
+typedef struct Production_ Production;
 typedef const char *(*TokenToStringFn)(int);
 typedef int (*StringToTokenFn)(const char *);
 
@@ -19,35 +19,35 @@ void parser_builder_rule(ParserBuilder *pb, const char rule_name[],
 
 // clang-format off
 #define GET_FUNC(_1, _2, _3, _4, _5, _6, _7, _8, _9, NAME, ...) NAME
-#define or2(p1, p2) __or(2, p1, p2)
-#define or3(p1, p2, p3) __or(3, p1, p2, p3)
-#define or4(p1, p2, p3, p4) __or(4, p1, p2, p3, p4)
-#define or5(p1, p2, p3, p4, p5) __or(5, p1, p2, p3, p4, p5)
-#define or6(p1, p2, p3, p4, p5, p6) __or(6, p1, p2, p3, p4, p5, p6)
-#define or7(p1, p2, p3, p4, p5, p6, p7) __or(7, p1, p2, p3, p4, p5, p6, p7)
+#define or2(p1, p2) or__(2, p1, p2)
+#define or3(p1, p2, p3) or__(3, p1, p2, p3)
+#define or4(p1, p2, p3, p4) or__(4, p1, p2, p3, p4)
+#define or5(p1, p2, p3, p4, p5) or__(5, p1, p2, p3, p4, p5)
+#define or6(p1, p2, p3, p4, p5, p6) or__(6, p1, p2, p3, p4, p5, p6)
+#define or7(p1, p2, p3, p4, p5, p6, p7) or__(7, p1, p2, p3, p4, p5, p6, p7)
 #define or8(p1, p2, p3, p4, p5, p6, p7, p8)                                     \
-  __or(8, p1, p2, p3, p4, p5, p6, p7, p8)
+  or__(8, p1, p2, p3, p4, p5, p6, p7, p8)
 #define or9(p1, p2, p3, p4, p5, p6, p7, p8, p9)                                 \
-  __or(9, p1, p2, p3, p4, p5, p6, p7, p8, p9)
+  or__(9, p1, p2, p3, p4, p5, p6, p7, p8, p9)
 #define or(...)                                                                 \
   GET_FUNC(__VA_ARGS__, or9, or8, or7, or6, or5, or4, or3, or2)(__VA_ARGS__)
-#define and2(p1, p2) __and(2, p1, p2)
-#define and3(p1, p2, p3) __and(3, p1, p2, p3)
-#define and4(p1, p2, p3, p4) __and(4, p1, p2, p3, p4)
-#define and5(p1, p2, p3, p4, p5) __and(5, p1, p2, p3, p4, p5)
-#define and6(p1, p2, p3, p4, p5, p6)  __and(6, p1, p2, p3, p4, p5, p6)
-#define and7(p1, p2, p3, p4, p5, p6, p7) __and(7, p1, p2, p3, p4, p5, p6, p7)
+#define and2(p1, p2) and__(2, p1, p2)
+#define and3(p1, p2, p3) and__(3, p1, p2, p3)
+#define and4(p1, p2, p3, p4) and__(4, p1, p2, p3, p4)
+#define and5(p1, p2, p3, p4, p5) and__(5, p1, p2, p3, p4, p5)
+#define and6(p1, p2, p3, p4, p5, p6)  and__(6, p1, p2, p3, p4, p5, p6)
+#define and7(p1, p2, p3, p4, p5, p6, p7) and__(7, p1, p2, p3, p4, p5, p6, p7)
 #define and8(p1, p2, p3, p4, p5, p6, p7, p8)                                    \
-  __and(8, p1, p2, p3, p4, p5, p6, p7, p8)
+  and__(8, p1, p2, p3, p4, p5, p6, p7, p8)
 #define and9(p1, p2, p3, p4, p5, p6, p7, p8, p9)                                \
-  __and(9, p1, p2, p3, p4, p5, p6, p7, p8, p9)
+  and__(9, p1, p2, p3, p4, p5, p6, p7, p8, p9)
 #define and(...)                                                                \
   GET_FUNC(__VA_ARGS__, and9, and8, and7, and6, and5, and4, and3, and2)         \
       (__VA_ARGS__)
 // clang-format on
 
-Production *__or(int arg_count, ...);
-Production *__and(int arg_count, ...);
+Production *or__(int arg_count, ...);
+Production *and__(int arg_count, ...);
 
 Production *rule(const char rule_name[]);
 Production *token(const char token[]);

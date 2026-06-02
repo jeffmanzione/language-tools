@@ -25,7 +25,6 @@ int main(int argc, const char *argv[]) {
   } else {
     char *dir_path, *file_name, *ext;
     split_path_file(argv[2], &dir_path, &file_name, &ext);
-    char *h_file_path = combine_path_file(dir_path, file_name, ".h");
     lexer_builder_write_c_file(&lb, out_file, global_intern(argv[1]));
 
     // Below code not necessary as the program will immediately free all memory
@@ -34,7 +33,6 @@ int main(int argc, const char *argv[]) {
     // free(dir_path);
     // free(file_name);
     // free(ext);
-    // free(h_file_path);
   }
 
   fclose(out_file);

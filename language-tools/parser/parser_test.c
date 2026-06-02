@@ -1,25 +1,22 @@
 #include "language-tools/parser/parser.h"
 
-#include "alloc/alloc.h"
-#include "alloc/arena/intern.h"
+#include "file-utils/file_info.h"
+#include "file-utils/sfile.h"
+#include "language-tools/intern.h"
 #include "language-tools/lexer/test_lexer.h"
 #include "language-tools/lexer/token.h"
 #include "language-tools/parser/test_parser.h"
-#include "struct/q.h"
-#include "util/file/file_info.h"
-#include "util/file/sfile.h"
 
 #define BUFFER_SIZE 256
 
 int main(int argc, const char *args[]) {
-  alloc_init();
-  intern_init();
+  global_string_intern_pool_init();
 
   FileInfo *fi = file_info_file(stdin);
 
   while (true) {
-    Q tokens;
-    Q_init(&tokens);
+    TokenArray tokens;
+    TokenArray_init(&tokens);
 
     printf("> ");
 
@@ -29,12 +26,14 @@ int main(int argc, const char *args[]) {
     parser_init(&parser, rule_tuple_expression, /*ignore_newline=*/false);
 
     const SyntaxTree *stree = parser_parse(&parser, &tokens);
+
     syntax_tree_print(stree, 0, stdout);
     printf("\n");
 
-    Q_iter iter = Q_iterator(&tokens);
-    for (; Q_has(&iter); Q_inc(&iter)) {
-      Token *token = *((Token **)Q_value(&iter));
+    TokenArrayIterator iter;
+    TokenArray_iterator(&iter, &tokens);
+    for (; TokenArray_has_next(&iter); TokenArray_next(&iter)) {
+      const Token *token = *TokenArray_value(&iter);
       if (token->type != TOKEN_NEWLINE) {
         printf("EXTRA TOKEN %d '%s'\n", token->type, token->text);
       }
@@ -42,10 +41,13 @@ int main(int argc, const char *args[]) {
 
     parser_finalize(&parser);
 
-    Q_finalize(&tokens);
+    TokenArray_finalize(&tokens);
   }
 
-  intern_finalize();
-  alloc_finalize();
+  // Below code not necessary as the program will immediately free all memory
+  // upon exit.
+
+  // global_string_intern_pool_finalize();
+
   return 0;
 }
