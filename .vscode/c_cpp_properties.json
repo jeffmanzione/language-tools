@@ -4,7 +4,12 @@
             "name": "Linux",
             "includePath": [
                 "${default}",
-                "${workspaceFolder}"
+                "${workspaceFolder}",
+                "${workspaceFolder}/bazel-language-tools/bazel-out/k8-opt/bin",
+                "${workspaceFolder}/bazel-language-tools/external/jeffmanzione_file_utils+",
+                "${workspaceFolder}/bazel-language-tools/external/jeffmanzione_c_data_structures+",
+                "${workspaceFolder}/bazel-language-tools/external/jeffmanzione_intern+",
+                "${workspaceFolder}/bazel-language-tools/external/jeffmanzione_rzalloc+"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

@@ -40,7 +40,6 @@ int main(int argc, const char *args[]) {
     }
 
     parser_finalize(&parser);
-
     TokenArray_finalize(&tokens);
   }
 

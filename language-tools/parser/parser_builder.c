@@ -35,6 +35,7 @@ typedef enum {
 } ProductionType;
 
 typedef struct Production_ {
+  bool exclude_from_header;
   ProductionType type;
   union {
     ProductionArray children;
@@ -48,9 +49,10 @@ typedef struct ParserBuilder_ {
 } ParserBuilder;
 
 Production *production_create_(ProductionType type) {
-  Production *pb = malloc(sizeof(Production));
-  pb->type = type;
-  return pb;
+  Production *p = malloc(sizeof(Production));
+  p->type = type;
+  p->exclude_from_header = false;
+  return p;
 }
 
 void production_delete_(Production *p) {
@@ -79,6 +81,10 @@ Production *production_or() { return production_multi_helper_(PRODUCTION_OR); }
 
 void production_add_child(Production *parent, Production *child) {
   ProductionArray_push_back(&parent->children, child);
+}
+
+void production_exclude_from_header(Production *p) {
+  p->exclude_from_header = true;
 }
 
 Production *production_multi_(ProductionType type, int arg_count,
@@ -242,14 +248,14 @@ const char *production_name_with_child_suffix_(const char *production_name,
   return global_intern_range(buffer, 0, len);
 }
 
-bool _is_helper_rule(const char production_name[]) {
+bool is_helper_rule_(const char production_name[]) {
   return NULL !=
          find_str((char *)production_name, strlen(production_name), "__", 2);
 }
 
-void _write_and_body(const char *production_name, const Production *p,
+void write_and_body_(const char *production_name, const Production *p,
                      FILE *file) {
-  if (_is_helper_rule(production_name)) {
+  if (is_helper_rule_(production_name)) {
     fprintf(file, "  SyntaxTree *st = parser_create_st(parser, NULL, \"\");\n");
   } else {
     fprintf(file,
@@ -288,7 +294,7 @@ void _write_and_body(const char *production_name, const Production *p,
           "  st->matched = true;\n  return parser_prune_st(parser, st);\n");
 }
 
-void _write_or_body(const char *production_name, const Production *p,
+void write_or_body_(const char *production_name, const Production *p,
                     FILE *file) {
   int child_index = -1;
   ProductionArrayIterator children;
@@ -311,7 +317,7 @@ void _write_or_body(const char *production_name, const Production *p,
   fprintf(file, "  return &NO_MATCH;\n");
 }
 
-void _write_rule_and_subrules(const char *production_name, const Production *p,
+void write_rule_and_subrules_(const char *production_name, const Production *p,
                               bool is_named_rule, FILE *file) {
   if (PRODUCTION_AND == p->type || PRODUCTION_OR == p->type) {
     int child_index = -1;
@@ -325,23 +331,23 @@ void _write_rule_and_subrules(const char *production_name, const Production *p,
           PRODUCTION_RULE == p_child->type) {
         continue;
       }
-      _write_rule_and_subrules(production_name_with_child_suffix_(
+      write_rule_and_subrules_(production_name_with_child_suffix_(
                                    production_name, p_child, child_index),
                                p_child, false, file);
     }
   }
   if (PRODUCTION_OPTIONAL == p->type) {
     p = ProductionArray_get_unchecked(&p->children, 0);
-    _write_rule_and_subrules(production_name, p, is_named_rule, file);
+    write_rule_and_subrules_(production_name, p, is_named_rule, file);
     return;
   }
   write_rule_signature_(production_name, p, is_named_rule, file);
 
   fprintf(file, " {\n");
   if (PRODUCTION_AND == p->type) {
-    _write_and_body(production_name, p, file);
+    write_and_body_(production_name, p, file);
   } else if (PRODUCTION_OR == p->type) {
-    _write_or_body(production_name, p, file);
+    write_or_body_(production_name, p, file);
   } else if (PRODUCTION_TOKEN == p->type) {
     fprintf(file, "  Token *token = parser_next(parser);\n");
     fprintf(file, "  if (NULL == token || %s != token->type) {\n", p->token);
@@ -366,8 +372,8 @@ void _write_rule_and_subrules(const char *production_name, const Production *p,
   fprintf(file, "}\n\n");
 }
 
-void _write_headers(ParserBuilder *pb, FILE *file, const char h_file_path[],
-                    const char lexer_h_file_path[]) {
+void write_includes_(ParserBuilder *pb, FILE *file, const char h_file_path[],
+                     const char lexer_h_file_path[]) {
   // Includes.
   fprintf(file, "#include \"%s\"\n\n", h_file_path);
   fprintf(file, "#include \"language-tools/lexer/token.h\"\n");
@@ -375,15 +381,34 @@ void _write_headers(ParserBuilder *pb, FILE *file, const char h_file_path[],
   fprintf(file, "\n");
 }
 
-void parser_builder_write_c_file(ParserBuilder *pb, const char h_file_path[],
-                                 const char lexer_h_file_path[], FILE *file) {
-  _write_headers(pb, file, h_file_path, lexer_h_file_path);
+void parser_builder_write_declare_functions_(ParserBuilder *pb, FILE *file) {
+  // Internal functions not included in header must be declared at the top of
+  // source.
   ProductionMapIterator rules;
   ProductionMap_iterator(&rules, &pb->rules);
   for (; ProductionMap_has_entry(&rules); ProductionMap_next_entry(&rules)) {
     const char *production_name = ProductionMap_key(&rules);
     const Production *p = *ProductionMap_value(&rules);
-    _write_rule_and_subrules(production_name, p, true, file);
+
+    fprintf(file, "// %s -> ", production_name);
+    production_print_(p, file);
+    fprintf(file, ";\n");
+
+    write_rule_signature_(production_name, p, true, file);
+    fprintf(file, ";\n\n");
+  }
+}
+
+void parser_builder_write_c_file(ParserBuilder *pb, const char h_file_path[],
+                                 const char lexer_h_file_path[], FILE *file) {
+  write_includes_(pb, file, h_file_path, lexer_h_file_path);
+
+  ProductionMapIterator rules;
+  ProductionMap_iterator(&rules, &pb->rules);
+  for (; ProductionMap_has_entry(&rules); ProductionMap_next_entry(&rules)) {
+    const char *production_name = ProductionMap_key(&rules);
+    const Production *p = *ProductionMap_value(&rules);
+    write_rule_and_subrules_(production_name, p, true, file);
   }
 }
 
@@ -396,19 +421,9 @@ void parser_builder_write_h_file(ParserBuilder *pb, FILE *file) {
       "#define COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_PARSER_TODO_THIS_H_\n\n");
   fprintf(file, "#include \"language-tools/parser/parser.h\"\n");
   fprintf(file, "\n");
-  ProductionMapIterator rules;
-  ProductionMap_iterator(&rules, &pb->rules);
-  for (; ProductionMap_has_entry(&rules); ProductionMap_next_entry(&rules)) {
-    const char *production_name = ProductionMap_key(&rules);
-    const Production *p = *ProductionMap_value(&rules);
 
-    fprintf(file, "// %s -> ", production_name);
-    production_print_(p, file);
-    fprintf(file, ";\n");
+  parser_builder_write_declare_functions_(pb, file);
 
-    write_rule_signature_(production_name, p, true, file);
-    fprintf(file, ";\n");
-  }
   fprintf(file,
           "\n#endif /* "
           "COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_PARSER_TODO_THIS_H_ */\n");

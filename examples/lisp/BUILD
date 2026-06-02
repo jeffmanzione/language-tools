@@ -10,6 +10,8 @@ package(
 lexer_builder(
     name = "lisp_lexer",
     comments = "comments.txt",
+    enum_prefix = "Lisp",
+    fn_prefix = "lisp_",
     keywords = "keywords.txt",
     strings = "strings.txt",
     symbols = "symbols.txt",

@@ -17,13 +17,12 @@ int main(int argc, const char *args[]) {
 
     printf("> ");
 
-    lexer_tokenize_line(file, &tokens);
+    lisp_lexer_tokenize_line(file, &tokens);
 
     Parser parser;
     parser_init(&parser, rule_expression,
-                /*ignore_newline=*/false);
+                /*ignore_newline=*/true);
     SyntaxTree *stree = parser_parse(&parser, &tokens);
-    stree = parser_prune_newlines(&parser, stree);
     // syntax_tree_print(stree, 0, stdout);
     // printf("\n");
 

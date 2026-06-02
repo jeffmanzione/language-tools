@@ -44,8 +44,12 @@ typedef struct {
 void lexer_builder_init(LexerBuilder *lb, FileInfo *symbols, FileInfo *keywords,
                         FileInfo *comments, FileInfo *strings);
 void lexer_builder_write_c_file(LexerBuilder *lb, FILE *file,
-                                const char h_file_path[]);
-void lexer_builder_write_h_file(LexerBuilder *lb, FILE *file);
+                                const char h_file_path[],
+                                const char fn_prefix[],
+                                const char enum_prefix[]);
+void lexer_builder_write_h_file(LexerBuilder *lb, FILE *file,
+                                const char fn_prefix[],
+                                const char enum_prefix[]);
 void lexer_builder_finalize(LexerBuilder *lb);
 
 #endif /* COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_LEXER_LEXER_BUILDER_H_ */

@@ -54,3 +54,4 @@ dkms.conf
 # Bazel
 bazel*
 MODULE.bazel.lock
+jeffmanzione_langauge_tools-*

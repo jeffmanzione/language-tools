@@ -56,7 +56,7 @@ Production *produce_production_(ParserBuilder *pb, const char rule_name[],
     Expression_sequence *s = EXTRACT_EXPRESSION(etree, sequence);
 
     char buffer[128];
-    int len = sprintf(buffer, "%s1", rule_name);
+    int len = sprintf(buffer, "%s_inner", rule_name);
     const char *helper_rule_name = global_intern_range(buffer, 0, len);
 
     Production *p_helper_and = production_and();
@@ -68,6 +68,7 @@ Production *produce_production_(ParserBuilder *pb, const char rule_name[],
                          produce_production_(pb, helper_rule_name, s->item));
     production_add_child(p_helper_and, rule(helper_rule_name));
     Production *p_helper = production_or();
+    production_exclude_from_header(p_helper);
     production_add_child(p_helper, p_helper_and);
     production_add_child(p_helper, epsilon());
 

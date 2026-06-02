@@ -38,7 +38,7 @@ POPULATE_IMPL(expression_function, const SyntaxTree *stree,
   const SyntaxTree *args = CHILD_SYNTAX_AT(stree, 2);
   while (true) {
     if (IS_SYNTAX(args, rule_expression_function_items) ||
-        IS_SYNTAX(args, rule_expression_function_items1)) {
+        IS_SYNTAX(args, rule_expression_function_items_inner)) {
       APPEND_TREE(analyzer, &expression_function->args,
                   CHILD_SYNTAX_AT(args, 0));
       args = CHILD_SYNTAX_AT(args, 1);

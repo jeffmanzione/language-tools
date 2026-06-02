@@ -15,8 +15,8 @@ To create the code generation for your language, define bazel rules for your lex
 `BUILD`:
 
 ```starlark
-load("@language-tools//language-tools/lexer:lexer_builder.bzl", "lexer_builder")
-load("@language-tools//language-tools/parser:parser_builder.bzl", "parser_builder")
+load("@jeffmanzione_language_tools//language-tools/lexer:lexer_builder.bzl", "lexer_builder")
+load("@jeffmanzione_language_tools//language-tools/parser:parser_builder.bzl", "parser_builder")
 
 lexer_builder(
     name = "lisp_lexer",
@@ -127,7 +127,7 @@ DEFINE_EXPRESSION(expression_function) {
     FUNC_MULTIPLY,
     FUNC_DIVIDE,
   } func;
-  AList args; /* ExpressionTree* */
+  ExpressionTreeArray args;
 };
 
 DEFINE_EXPRESSION(expression) { double floating; };
@@ -135,7 +135,7 @@ DEFINE_EXPRESSION(expression) { double floating; };
 
 POPULATE_IMPL(expression_function, const SyntaxTree *stree,
               SemanticAnalyzer *analyzer) {
-  alist_init(&expression_function->args, ExpressionTree *, DEFAULT_ARRAY_SZ);
+  ExpressionTreeArray_init(&expression_function->args);
   switch (CHILD_SYNTAX_AT(stree, 1)->token->type) {
   case KEYWORD_AND:
     expression_function->func = FUNC_AND;
@@ -151,7 +151,7 @@ POPULATE_IMPL(expression_function, const SyntaxTree *stree,
   SyntaxTree *args = CHILD_SYNTAX_AT(stree, 2);
   while (true) {
     if (IS_SYNTAX(args, rule_expression_function_items) ||
-        IS_SYNTAX(args, rule_expression_function_items1)) {
+        IS_SYNTAX(args, rule_expression_function_items_inner)) {
       APPEND_TREE(analyzer, &expression_function->args,
                   CHILD_SYNTAX_AT(args, 0));
       args = CHILD_SYNTAX_AT(args, 1);
@@ -163,9 +163,11 @@ POPULATE_IMPL(expression_function, const SyntaxTree *stree,
 }
 
 DELETE_IMPL(expression_function, SemanticAnalyzer *analyzer) {
-  for (AL_iter iter = alist_iter(&expression_function->args); al_has(&iter);
-       al_inc(&iter)) {
-    ExpressionTree *child = *(ExpressionTree **)al_value(&iter);
+  ExpressionTreeArrayIterator it;
+  ExpressionTreeArray(&it, &expression_function->args);
+  for (; ExpressionTreeArray_has_next(&iter);
+       ExpressionTreeArray_next(&iter)) {
+    ExpressionTree *child = ExpressionTreeArray_mutable_value(&iter);
     semantic_analyzer_delete(analyzer, child);
   }
 }
@@ -181,8 +183,8 @@ DELETE_IMPL(expression, SemanticAnalyzer *analyzer) {}
 
 ```c
 // Creates an empty queue.
-Q tokens;
-Q_init(&tokens);
+TokenArray tokens;
+TokenArray_init(&tokens);
 // Lexes/tokenizes a file into tokens.
 lexer_tokenize(file, &tokens);
 
