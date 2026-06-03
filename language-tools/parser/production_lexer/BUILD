@@ -1,7 +1,7 @@
 load("//language-tools/lexer:lexer_builder.bzl", "lexer_builder")
 
 package(
-    default_visibility = ["//visibility:public"],
+    default_visibility = ["//language-tools:internal"],
 )
 
 lexer_builder(

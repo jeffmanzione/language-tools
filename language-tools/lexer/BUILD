@@ -3,13 +3,14 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//language-tools/lexer:lexer_builder.bzl", "lexer_builder")
 
 package(
-    default_visibility = ["//visibility:public"],
+    default_visibility = ["//language-tools:internal"],
 )
 
 cc_library(
     name = "lexer_helper",
     srcs = ["lexer_helper.c"],
     hdrs = ["lexer_helper.h"],
+    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -28,6 +29,7 @@ cc_library(
 cc_binary(
     name = "lexer_builder_main",
     srcs = ["lexer_builder_main.c"],
+    visibility = ["//visibility:public"],
     deps = [
         ":lexer_builder",
         "//language-tools:intern",
@@ -60,6 +62,7 @@ cc_library(
     name = "token",
     srcs = ["token.c"],
     hdrs = ["token.h"],
+    visibility = ["//visibility:public"],
     deps = [
         "//language-tools:intern",
         "@jeffmanzione_c_data_structures//c-data-structures:arraylike",

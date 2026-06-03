@@ -4,7 +4,7 @@ load("//language-tools/lexer:lexer_builder.bzl", "lexer_builder")
 load("//language-tools/parser:parser_builder.bzl", "parser_builder")
 
 package(
-    default_visibility = ["//visibility:public"],
+    default_visibility = ["//visibility:private"],
 )
 
 lexer_builder(
@@ -30,7 +30,6 @@ cc_library(
     deps = [
         ":lisp_parser",
         "//language-tools/lexer:token",
-        "//language-tools/parser/production_lexer",
         "//language-tools/semantic_analyzer",
         "//language-tools/semantic_analyzer:expression_tree",
     ],
@@ -46,7 +45,6 @@ cc_binary(
         "//language-tools:intern",
         "//language-tools/lexer:token",
         "//language-tools/parser",
-        "//language-tools/parser/production_lexer",
         "//language-tools/semantic_analyzer",
         "//language-tools/semantic_analyzer:expression_tree",
         "@jeffmanzione_file_utils//file-utils:file_info",

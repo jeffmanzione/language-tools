@@ -1,3 +1,5 @@
+""" parser_builder.bzl """
+
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 def _parser_builder_impl(ctx):

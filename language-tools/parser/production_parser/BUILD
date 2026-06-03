@@ -2,12 +2,13 @@ load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:defs.bzl", "cc_binary")
 
 package(
-    default_visibility = ["//visibility:public"],
+    default_visibility = ["//language-tools:internal"],
 )
 
 cc_binary(
     name = "production_parser_main",
     srcs = ["production_parser_main.c"],
+    visibility = ["//visibility:public"],
     deps = [
         ":production_parser_semantics",
         ":production_rules",
