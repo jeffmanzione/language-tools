@@ -1,3 +1,5 @@
+""" lexer_builder.bzl """
+
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 def _lexer_builder_impl(ctx):
