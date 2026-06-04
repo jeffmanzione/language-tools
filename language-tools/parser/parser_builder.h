@@ -1,6 +1,10 @@
 #ifndef COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_PARSER_PARSER_BUILDER_H_
 #define COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_PARSER_PARSER_BUILDER_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 
 typedef struct ParserBuilder_ ParserBuilder;
@@ -62,5 +66,9 @@ void production_add_child(Production *parent, Production *child);
 void production_exclude_from_header(Production *p);
 
 void parser_builder_print(ParserBuilder *pb, FILE *out);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_PARSER_PARSER_BUILDER_H_ */

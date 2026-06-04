@@ -1,6 +1,10 @@
 #ifndef COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_LEXER_LEXER_HELPER_H_
 #define COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_LEXER_LEXER_HELPER_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdbool.h>
 
 bool is_number(const char c);
@@ -12,5 +16,9 @@ bool is_any_space(const char c);
 char char_unesc(char u);
 char *escape_string(const char str[]);
 char *strip_return_char(const char *str, int start, int end);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_LEXER_LEXER_HELPER_H_ */

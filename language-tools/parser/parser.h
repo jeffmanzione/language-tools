@@ -1,6 +1,10 @@
 #ifndef COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_PARSER_PARSER_H_
 #define COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_PARSER_PARSER_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 
 #include "c-data-structures/arraylike.h"
@@ -46,5 +50,9 @@ SyntaxTree *match(Parser *parser, RuleFn rule_fn, const char production_name[]);
 void syntax_tree_print(const SyntaxTree *st, int level, FILE *out);
 
 SyntaxTree *parser_prune_newlines(Parser *p, SyntaxTree *st);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_PARSER_PARSER_H_ */

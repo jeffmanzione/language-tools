@@ -1,6 +1,10 @@
 #ifndef COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_SA_SEMANTIC_ANALYZER_H_
 #define COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_SA_SEMANTIC_ANALYZER_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "language-tools/parser/parser.h"
 #include "language-tools/semantic_analyzer/expression_tree.h"
 
@@ -46,5 +50,9 @@ ExpressionTree *semantic_analyzer_populate(SemanticAnalyzer *analyzer,
 void semantic_analyzer_delete(SemanticAnalyzer *analyzer, ExpressionTree *tree);
 
 ExpressionTree *extract_tree_(ExpressionTreeArray *list_of_tree, int index);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_SA_SEMANTIC_ANALYZER_H_  */

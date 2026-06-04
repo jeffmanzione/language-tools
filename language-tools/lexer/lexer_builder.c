@@ -657,43 +657,62 @@ void lexer_builder_write_h_file(LexerBuilder *lb, FILE *file,
                                 const char enum_prefix[]) {
   fprintf(file, "#ifndef COM_GITHUB_LANGUAGE_TOOLS_LEXER_CUSTOM_LEXER_H_%s\n",
           fn_prefix);
-  fprintf(file, "#define COM_GITHUB_LANGUAGE_TOOLS_LEXER_CUSTOM_LEXER_H_%s\n\n",
-          fn_prefix);
-  fprintf(file, "#include <stdbool.h>\n\n");
-  fprintf(file, "#include \"file-utils/file_info.h\"\n");
-  fprintf(file, "#include \"language-tools/lexer/token.h\"\n\n");
-  write_token_type_enum_(lb, file, enum_prefix);
-  fprintf(file, "%sLexType %ssymbol_token_type(const char word[]);\n",
-          enum_prefix, fn_prefix);
-  fprintf(file, "const char *%stoken_type_to_str(%sLexType token_type);\n",
-          fn_prefix, enum_prefix);
-  fprintf(file, "const char *%stoken_type_to_name(%sLexType token_type);\n",
-          fn_prefix, enum_prefix);
-  fprintf(file, "%sLexType %stoken_name_to_token_type(const char str[]);\n",
-          enum_prefix, fn_prefix);
-  fprintf(file, "%sLexType %sresolve_type(const char word[], int word_len);\n",
-          enum_prefix, fn_prefix);
-  fprintf(file, "bool %sis_start_of_symbol(const char word[]);\n", fn_prefix);
   fprintf(
-      file,
-      "bool %sis_start_of_comment(const char word[], int *comment_open_len, "
-      "char **comment_close);\n",
+      file, "#define COM_GITHUB_LANGUAGE_TOOLS_LEXER_CUSTOM_LEXER_H_%s\n\n",
+
+#ifdef __cplusplus
+      extern "C" {
+#endif
+          fn_prefix);
+          fprintf(file, "#include <stdbool.h>\n\n");
+          fprintf(file, "#include \"file-utils/file_info.h\"\n");
+          fprintf(file, "#include \"language-tools/lexer/token.h\"\n\n");
+          write_token_type_enum_(lb, file, enum_prefix);
+          fprintf(file, "%sLexType %ssymbol_token_type(const char word[]);\n",
+                  enum_prefix, fn_prefix);
+          fprintf(file,
+                  "const char *%stoken_type_to_str(%sLexType token_type);\n",
+                  fn_prefix, enum_prefix);
+          fprintf(file,
+                  "const char *%stoken_type_to_name(%sLexType token_type);\n",
+                  fn_prefix, enum_prefix);
+          fprintf(file,
+                  "%sLexType %stoken_name_to_token_type(const char str[]);\n",
+                  enum_prefix, fn_prefix);
+          fprintf(
+              file,
+              "%sLexType %sresolve_type(const char word[], int word_len);\n",
+              enum_prefix, fn_prefix);
+          fprintf(file, "bool %sis_start_of_symbol(const char word[]);\n",
+                  fn_prefix);
+          fprintf(file,
+                  "bool %sis_start_of_comment(const char word[], int "
+                  "*comment_open_len, "
+                  "char **comment_close);\n",
+                  fn_prefix);
+          fprintf(file,
+                  "bool %sis_start_of_string(const char word[], %sLexType "
+                  "*string_type, "
+                  "int *string_open_len, char **string_close);\n",
+                  fn_prefix, enum_prefix);
+          fprintf(file, "bool %stoken_type_is_string(%sLexType type);\n",
+                  fn_prefix, enum_prefix);
+          fprintf(file,
+                  "void %slexer_tokenize_line(FileInfo *file, TokenArray "
+                  "*tokens);\n",
+                  fn_prefix);
+          fprintf(
+              file,
+              "void %slexer_tokenize(FileInfo *file, TokenArray *tokens);\n",
+              fn_prefix);
+          fprintf(file,
+                  "\n#ifdef __cplusplus
+      }
+#endif
+
+#endif /* "
+                  "COM_GITHUB_LANGUAGE_TOOLS_LEXER_CUSTOM_LEXER_H_%s */\n",
       fn_prefix);
-  fprintf(
-      file,
-      "bool %sis_start_of_string(const char word[], %sLexType *string_type, "
-      "int *string_open_len, char **string_close);\n",
-      fn_prefix, enum_prefix);
-  fprintf(file, "bool %stoken_type_is_string(%sLexType type);\n", fn_prefix,
-          enum_prefix);
-  fprintf(file,
-          "void %slexer_tokenize_line(FileInfo *file, TokenArray *tokens);\n",
-          fn_prefix);
-  fprintf(file, "void %slexer_tokenize(FileInfo *file, TokenArray *tokens);\n",
-          fn_prefix);
-  fprintf(file,
-          "\n#endif /* COM_GITHUB_LANGUAGE_TOOLS_LEXER_CUSTOM_LEXER_H_%s */\n",
-          fn_prefix);
 }
 
 void lexer_builder_finalize(LexerBuilder *lb) {

@@ -1,6 +1,10 @@
 #ifndef COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_PARSER_PRODUCTION_PARSER_PRODUCTION_PARSER_SEMANTICS_H_
 #define COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_PARSER_PRODUCTION_PARSER_PRODUCTION_PARSER_SEMANTICS_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "language-tools/lexer/token.h"
 #include "language-tools/parser/production_lexer/production_lexer.h"
 #include "language-tools/parser/production_parser/production_rules.h"
@@ -33,5 +37,9 @@ DEFINE_EXPRESSION(production_rule_set) { ExpressionTreeArray rules; };
 
 void production_parser_init_semantics(SAMap *populators, SAMap *producers,
                                       SAMap *deleters);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_..._PRODUCTION_PARSER_SEMANTICs_H_*/

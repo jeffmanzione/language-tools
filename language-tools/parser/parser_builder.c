@@ -419,13 +419,21 @@ void parser_builder_write_h_file(ParserBuilder *pb, FILE *file) {
   fprintf(
       file,
       "#define COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_PARSER_TODO_THIS_H_\n\n");
+
+#ifdef __cplusplus
+  extern "C" {
+#endif
   fprintf(file, "#include \"language-tools/parser/parser.h\"\n");
   fprintf(file, "\n");
 
   parser_builder_write_declare_functions_(pb, file);
 
   fprintf(file,
-          "\n#endif /* "
+          "\n#ifdef __cplusplus
+  }
+#endif
+
+#endif /* "
           "COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_PARSER_TODO_THIS_H_ */\n");
 }
 

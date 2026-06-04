@@ -1,6 +1,10 @@
 #ifndef COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_LEXER_LEXER_BUILDER_H_
 #define COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_LEXER_LEXER_BUILDER_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 
 #include "c-data-structures/arraylike.h"
@@ -51,5 +55,9 @@ void lexer_builder_write_h_file(LexerBuilder *lb, FILE *file,
                                 const char fn_prefix[],
                                 const char enum_prefix[]);
 void lexer_builder_finalize(LexerBuilder *lb);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_LEXER_LEXER_BUILDER_H_ */

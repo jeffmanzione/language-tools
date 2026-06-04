@@ -1,6 +1,10 @@
 #ifndef COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_SA_EXPRESSION_TREE_H_
 #define COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_SA_EXPRESSION_TREE_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -162,5 +166,9 @@ int32_t SAMap_ptr_comparator(const void *ptr1, uint32_t ptr1_len,
       name = stree;                                     \
     }                                                   \
   }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_SA_EXPRESSION_TREE_H_ */
