@@ -9,6 +9,9 @@
 int main(int argc, const char *args[]) {
   global_string_intern_pool_init();
 
+  SemanticAnalyzer analyzer;
+  semantic_analyzer_init(&analyzer, init_semantics);
+
   FileInfo *file = file_info_file(stdin);
 
   while (true) {
@@ -26,15 +29,12 @@ int main(int argc, const char *args[]) {
     // syntax_tree_print(stree, 0, stdout);
     // printf("\n");
 
-    SemanticAnalyzer analyzer;
-    semantic_analyzer_init(&analyzer, init_semantics);
     ExpressionTree *etree = semantic_analyzer_populate(&analyzer, stree);
 
     double result = evaluate_lisp_expression(etree, stdout);
     printf("<-- %0.4f\n", result);
 
     semantic_analyzer_delete(&analyzer, etree);
-    semantic_analyzer_finalize(&analyzer);
 
     parser_delete_st(&parser, stree);
     parser_finalize(&parser);
@@ -44,7 +44,10 @@ int main(int argc, const char *args[]) {
   // Below code not necessary as the program will immediately free all memory
   // upon exit.
 
+  // semantic_analyzer_finalize(&analyzer);
   // file_info_delete(file);
   // token_finalize_all();
   // global_string_intern_pool_finalize();
+
+  return 0;
 }

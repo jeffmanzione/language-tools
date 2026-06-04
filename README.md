@@ -182,6 +182,11 @@ DELETE_IMPL(expression, SemanticAnalyzer *analyzer) {}
 ### Using your code
 
 ```c
+// String intern used internally.
+global_string_intern_pool_init();
+// Read stdin.
+FileInfo *file = file_info_file(stdin);
+
 // Creates an empty queue.
 TokenArray tokens;
 TokenArray_init(&tokens);
@@ -201,4 +206,5 @@ ExpressionTree *etree = semantic_analyzer_populate(&analyzer, stree);
 
 // Use your expression as you see fit.
 double result = evaluate_lisp_expression(etree, stdout);
+printf("<-- %0.4f\n", result);
 ```
