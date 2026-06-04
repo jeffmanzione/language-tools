@@ -6,7 +6,7 @@
 #include "c-data-structures/arraylike.h"
 #include "file-utils/file_info.h"
 
-#define MAX_CHAR 256
+#define TRIE_MAX_CHAR_ 256
 
 typedef struct {
   const char *token;
@@ -28,7 +28,7 @@ DEFINE_ARRAYLIKE(OpenCloseDefArray, OpenCloseDef_);
 typedef struct Trie__ Trie_;
 
 struct Trie__ {
-  Trie_ *chars[MAX_CHAR];
+  Trie_ *chars[TRIE_MAX_CHAR_];
   TokenDef_ *has;
 };
 

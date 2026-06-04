@@ -8,7 +8,7 @@
 #include "rzalloc/rzalloc.h"
 
 typedef struct SyntaxTree_ SyntaxTree;
-typedef struct _Parser Parser;
+typedef struct Parser_ Parser;
 
 typedef SyntaxTree *(*RuleFn)(Parser *parser);
 
@@ -22,7 +22,7 @@ struct SyntaxTree_ {
   SyntaxTreeArray children;
 };
 
-struct _Parser {
+struct Parser_ {
   RzallocArena st_arena;
   RuleFn root;
   TokenArray *tokens;

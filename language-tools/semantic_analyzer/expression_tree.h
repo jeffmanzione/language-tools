@@ -22,14 +22,14 @@ uint32_t SAMap_ptr_hasher(const void *ptr, uint32_t size);
 int32_t SAMap_ptr_comparator(const void *ptr1, uint32_t ptr1_len,
                              const void *ptr2, uint32_t ptr2_len);
 
-#define _GET_MACRO(_1, _2, NAME) NAME
+#define GET_MACRO_(_1, _2, NAME) NAME
 #define DEFINE_EXPRESSION(...)                             \
-  _GET_MACRO(__VA_ARGS__, DEFINE_EXPRESSION_WITH_PRODUCER, \
+  GET_MACRO_(__VA_ARGS__, DEFINE_EXPRESSION_WITH_PRODUCER, \
              DEFINE_EXPRESSION_NO_PRODUCER)                \
   (__VA_ARGS__)
 
 #define DEFINE_EXPRESSION_NO_PRODUCER(name)                              \
-  typedef struct _Expression_##name Expression_##name;                   \
+  typedef struct Expression__##name Expression_##name;                   \
   ExpressionTree *Populate_##name(const SyntaxTree *tree,                \
                                   SemanticAnalyzer *analyzer);           \
   void Transform_##name(const SyntaxTree *tree, Expression_##name *name, \
@@ -37,10 +37,10 @@ int32_t SAMap_ptr_comparator(const void *ptr1, uint32_t ptr1_len,
   void Delete_##name(ExpressionTree *tree, SemanticAnalyzer *analyzer);  \
   void Delete_##name##_inner(Expression_##name *name,                    \
                              SemanticAnalyzer *analyzer);                \
-  struct _Expression_##name
+  struct Expression__##name
 
 #define DEFINE_EXPRESSION_WITH_PRODUCER(name, ProduceType)               \
-  typedef struct _Expression_##name Expression_##name;                   \
+  typedef struct Expression__##name Expression_##name;                   \
   ExpressionTree *Populate_##name(const SyntaxTree *tree,                \
                                   SemanticAnalyzer *analyzer);           \
   void Transform_##name(const SyntaxTree *tree, Expression_##name *name, \
@@ -52,7 +52,7 @@ int32_t SAMap_ptr_comparator(const void *ptr1, uint32_t ptr1_len,
                      ProduceType *);                                     \
   int Produce_##name##_inner(Expression_##name *name,                    \
                              SemanticAnalyzer *analyzer, ProduceType *); \
-  struct _Expression_##name
+  struct Expression__##name
 
 #define POPULATE_IMPL(name, stree_input, analyzer_input)         \
   ExpressionTree *Populate_##name(stree_input, analyzer_input) { \
@@ -139,7 +139,7 @@ int32_t SAMap_ptr_comparator(const void *ptr1, uint32_t ptr1_len,
     ExpressionTreeArray_push_back(list_of_tree, expr);            \
   }
 
-#define EXTRACT_TREE(list_of_tree, i) extract_tree__(list_of_tree, i)
+#define EXTRACT_TREE(list_of_tree, i) extract_tree_(list_of_tree, i)
 
 #define DECLARE_IF_TYPE(name, type, stree)              \
   SyntaxTree *name;                                     \

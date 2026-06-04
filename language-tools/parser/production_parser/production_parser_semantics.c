@@ -146,7 +146,7 @@ DELETE_IMPL(production_rule, SemanticAnalyzer *analyzer) {
   }
 }
 
-void _populate_production_rule_set1(SemanticAnalyzer *analyzer,
+void populate_production_rule_set1_(SemanticAnalyzer *analyzer,
                                     const SyntaxTree *stree,
                                     ExpressionTreeArray *rules) {
   EXPECT_TYPE(stree, rule_production_rule_set1);
@@ -158,7 +158,7 @@ void _populate_production_rule_set1(SemanticAnalyzer *analyzer,
       ExpressionTree *exp = semantic_analyzer_populate(analyzer, st_child);
       ExpressionTreeArray_push_back(rules, exp);
     } else if (IS_SYNTAX(st_child, rule_production_rule_set1)) {
-      _populate_production_rule_set1(analyzer, st_child, rules);
+      populate_production_rule_set1_(analyzer, st_child, rules);
     }
   }
 }
@@ -170,7 +170,7 @@ POPULATE_IMPL(production_rule_set, const SyntaxTree *stree,
   ExpressionTree *first_rule = semantic_analyzer_populate(analyzer, first);
   ExpressionTreeArray_push_back(&production_rule_set->rules, first_rule);
   if (SyntaxTreeArray_size(&stree->children) > 1) {
-    _populate_production_rule_set1(analyzer, CHILD_SYNTAX_AT(stree, 1),
+    populate_production_rule_set1_(analyzer, CHILD_SYNTAX_AT(stree, 1),
                                    &production_rule_set->rules);
   }
 }

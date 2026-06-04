@@ -45,6 +45,6 @@ ExpressionTree *semantic_analyzer_populate(SemanticAnalyzer *analyzer,
 
 void semantic_analyzer_delete(SemanticAnalyzer *analyzer, ExpressionTree *tree);
 
-ExpressionTree *extract_tree__(ExpressionTreeArray *list_of_tree, int index);
+ExpressionTree *extract_tree_(ExpressionTreeArray *list_of_tree, int index);
 
 #endif /* COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_SA_SEMANTIC_ANALYZER_H_  */

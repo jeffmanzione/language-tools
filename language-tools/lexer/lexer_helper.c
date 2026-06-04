@@ -59,7 +59,7 @@ char char_unesc(char u) {
 
 #define DEFAULT_ESCAPED_STRING_SZ 32
 
-static bool _should_escape(char c) {
+static bool should_escape_(char c) {
   switch (c) {
     case '\'':
     case '\"':
@@ -72,7 +72,7 @@ static bool _should_escape(char c) {
   }
 }
 
-static char _excape_char(char c) {
+static char excape_char_(char c) {
   switch (c) {
     case '\n':
       return 'n';
@@ -105,10 +105,10 @@ char *escape_string(const char str[]) {
       ptr++;
       continue;
     }
-    if (_should_escape(c)) {
+    if (should_escape_(c)) {
       escaped_str[escaped_len++] = '\\';
     }
-    escaped_str[escaped_len++] = _excape_char(c);
+    escaped_str[escaped_len++] = excape_char_(c);
     ptr++;
   }
   escaped_str[escaped_len] = '\0';
@@ -133,7 +133,7 @@ char *strip_return_char(const char *str, int start, int end) {
       i++;
       continue;
     }
-    new_str[len++] = _excape_char(c);
+    new_str[len++] = excape_char_(c);
   }
   new_str[len] = '\0';
   return realloc(new_str, sizeof(char) * (len + 1));

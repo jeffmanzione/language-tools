@@ -1,2 +1,0 @@
-COMMENT_BLOCK,/*,*/
-COMMENT_LINE,//,\n

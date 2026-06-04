@@ -65,6 +65,5 @@ def parser_builder(name, rules, lexer):
         deps = [
             lexer,
             "//language-tools/parser",
-            "@jeffmanzione_c_data_structures//c-data-structures:arraylike",
         ],
     )

@@ -1,6 +1,6 @@
 #include "language-tools/semantic_analyzer/semantic_analyzer.h"
 
-ExpressionTree *extract_tree__(ExpressionTreeArray *alist_of_tree, int index) {
+ExpressionTree *extract_tree_(ExpressionTreeArray *alist_of_tree, int index) {
   return ExpressionTreeArray_get_unchecked(alist_of_tree, index);
 }
 

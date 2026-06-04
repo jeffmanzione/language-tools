@@ -17,7 +17,7 @@ Trie_ *trie_create_() {
 
 void trie_delete_(Trie_ *trie) {
   int i;
-  for (i = 0; i < MAX_CHAR; ++i) {
+  for (i = 0; i < TRIE_MAX_CHAR_; ++i) {
     Trie_ *child = trie->chars[i];
     if (NULL != child) {
       trie_delete_(child);
@@ -26,9 +26,9 @@ void trie_delete_(Trie_ *trie) {
   free(trie);
 }
 
-bool _has_child_trie(Trie_ *trie) {
+bool has_child_trie_(Trie_ *trie) {
   int i;
-  for (i = 0; i < MAX_CHAR; ++i) {
+  for (i = 0; i < TRIE_MAX_CHAR_; ++i) {
     Trie_ *child = trie->chars[i];
     if (NULL != child) {
       return true;
@@ -278,10 +278,10 @@ void write_token_type_to_name_(LexerBuilder *lb, FILE *file,
 
 void write_switch_for_symbol_resolve_(Trie_ *trie, int index, FILE *file) {
   int i;
-  const bool has_children = _has_child_trie(trie);
+  const bool has_children = has_child_trie_(trie);
   if (has_children) {
     fprintf(file, "%*sswitch (word[%d]) {\n", index * 2, "", index - 1);
-    for (i = 0; i < MAX_CHAR; ++i) {
+    for (i = 0; i < TRIE_MAX_CHAR_; ++i) {
       Trie_ *child = trie->chars[i];
       if (NULL == child) {
         continue;
@@ -303,14 +303,14 @@ void write_switch_for_symbol_resolve_(Trie_ *trie, int index, FILE *file) {
 
 void write_switch_for_keyword_resolve_(Trie_ *trie, int index, FILE *file) {
   int i;
-  const bool has_children = _has_child_trie(trie);
+  const bool has_children = has_child_trie_(trie);
   if (trie->has) {
     fprintf(file, "%*sif (word_len == %d) { return %s; }\n", index * 2, "",
             index - 1, trie->has->token_name);
   }
   if (has_children) {
     fprintf(file, "%*sswitch (word[%d]) {\n", index * 2, "", index - 1);
-    for (i = 0; i < MAX_CHAR; ++i) {
+    for (i = 0; i < TRIE_MAX_CHAR_; ++i) {
       Trie_ *child = trie->chars[i];
       if (NULL == child) {
         continue;
@@ -360,7 +360,7 @@ void write_is_start_of_symbol_(LexerBuilder *lb, FILE *file,
   fprintf(file, "bool %sis_start_of_symbol(const char word[]) {\n", fn_prefix);
   int i;
   fprintf(file, "  switch (word[0]) {\n");
-  for (i = 0; i < MAX_CHAR; ++i) {
+  for (i = 0; i < TRIE_MAX_CHAR_; ++i) {
     Trie_ *child = lb->symbols_trie->chars[i];
     if (NULL == child) {
       continue;

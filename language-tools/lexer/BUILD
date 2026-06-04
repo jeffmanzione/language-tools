@@ -1,6 +1,5 @@
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
-load("@rules_cc//cc:defs.bzl", "cc_library")
-load("//language-tools/lexer:lexer_builder.bzl", "lexer_builder")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 package(
     default_visibility = ["//language-tools:internal"],
@@ -35,26 +34,6 @@ cc_binary(
         "//language-tools:intern",
         "@jeffmanzione_file_utils//file-utils:file_info",
         "@jeffmanzione_file_utils//file-utils:file_utils",
-    ],
-)
-
-lexer_builder(
-    name = "test_lexer",
-    comments = "testdata/comments.txt",
-    keywords = "testdata/keywords.txt",
-    strings = "testdata/strings.txt",
-    symbols = "testdata/symbols.txt",
-)
-
-cc_binary(
-    name = "lexer_test",
-    srcs = ["lexer_test.c"],
-    deps = [
-        ":test_lexer",
-        ":token",
-        "//language-tools:intern",
-        "@jeffmanzione_file_utils//file-utils:file_info",
-        "@jeffmanzione_file_utils//file-utils:sfile",
     ],
 )
 
