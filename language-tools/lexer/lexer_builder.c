@@ -134,10 +134,11 @@ void lexer_builder_init(LexerBuilder *lb, FileInfo *symbols, FileInfo *keywords,
 void write_source_includes_(LexerBuilder *lb, FILE *file,
                             const char h_file_path[]) {
   // Includes.
-  fprintf(file, "#include \"%s\"\n\n", h_file_path);
-  fprintf(file, "#include \"language-tools/lexer/lexer_helper.h\"\n");
-  fprintf(file, "#include \"file-utils/string_utils.h\"\n");
-  fprintf(file, "\n");
+  fprintf(file,
+          "#include \"%s\"\n\n"
+          "#include \"language-tools/lexer/lexer_helper.h\"\n"
+          "#include \"file-utils/string_utils.h\"\n\n",
+          h_file_path);
 }
 
 void write_token_type_enum_(LexerBuilder *lb, FILE *file,
@@ -174,13 +175,14 @@ void write_token_type_enum_(LexerBuilder *lb, FILE *file,
 void write_token_type_to_str_(LexerBuilder *lb, FILE *file,
                               const char fn_prefix[],
                               const char enum_prefix[]) {
-  fprintf(file, "const char *%stoken_type_to_str(%sLexType token_type) {\n",
+  fprintf(file,
+          "const char *%stoken_type_to_str(%sLexType token_type) {\n"
+          "  switch(token_type) {\n"
+          "    case TOKEN_NEWLINE: return \"\\n\";\n"
+          "    case TOKEN_WORD: return \"TOKEN_WORD\";\n"
+          "    case TOKEN_INTEGER: return \"TOKEN_INTEGER\";\n"
+          "    case TOKEN_FLOATING: return \"TOKEN_FLOATING\";\n",
           fn_prefix, enum_prefix);
-  fprintf(file, "  switch(token_type) {\n");
-  fprintf(file, "    case TOKEN_NEWLINE: return \"\\n\";\n");
-  fprintf(file, "    case TOKEN_WORD: return \"TOKEN_WORD\";\n");
-  fprintf(file, "    case TOKEN_INTEGER: return \"TOKEN_INTEGER\";\n");
-  fprintf(file, "    case TOKEN_FLOATING: return \"TOKEN_FLOATING\";\n");
   OpenCloseDefArrayIterator oc_iter;
   OpenCloseDefArray_iterator(&oc_iter, &lb->strings);
   for (; OpenCloseDefArray_has_next(&oc_iter);
@@ -208,16 +210,14 @@ void write_token_type_to_str_(LexerBuilder *lb, FILE *file,
 void write_token_name_to_token_type_(LexerBuilder *lb, FILE *file,
                                      const char fn_prefix[],
                                      const char enum_prefix[]) {
-  fprintf(file, "%sLexType %stoken_name_to_token_type(const char str[]) {\n",
-          enum_prefix, fn_prefix);
-  fprintf(file,
-          "  if (0 == strcmp(\"TOKEN_NEWLINE\", str)) return TOKEN_NEWLINE;\n");
-  fprintf(file, "  if (0 == strcmp(\"TOKEN_WORD\", str)) return TOKEN_WORD;\n");
-  fprintf(file,
-          "  if (0 == strcmp(\"TOKEN_INTEGER\", str)) return TOKEN_INTEGER;\n");
   fprintf(
       file,
-      "  if (0 == strcmp(\"TOKEN_FLOATING\", str)) return TOKEN_FLOATING;\n");
+      "%sLexType %stoken_name_to_token_type(const char str[]) {\n"
+      "  if (0 == strcmp(\"TOKEN_NEWLINE\", str)) return TOKEN_NEWLINE;\n"
+      "  if (0 == strcmp(\"TOKEN_WORD\", str)) return TOKEN_WORD;\n"
+      "  if (0 == strcmp(\"TOKEN_INTEGER\", str)) return TOKEN_INTEGER;\n"
+      "  if (0 == strcmp(\"TOKEN_FLOATING\", str)) return TOKEN_FLOATING;\n",
+      enum_prefix, fn_prefix);
   OpenCloseDefArrayIterator oc_iter;
   OpenCloseDefArray_iterator(&oc_iter, &lb->strings);
   for (; OpenCloseDefArray_has_next(&oc_iter);
@@ -245,13 +245,14 @@ void write_token_name_to_token_type_(LexerBuilder *lb, FILE *file,
 void write_token_type_to_name_(LexerBuilder *lb, FILE *file,
                                const char fn_prefix[],
                                const char enum_prefix[]) {
-  fprintf(file, "const char *%stoken_type_to_name(%sLexType token_type) {\n",
+  fprintf(file,
+          "const char *%stoken_type_to_name(%sLexType token_type) {\n"
+          "  switch(token_type) {\n"
+          "    case TOKEN_NEWLINE: return \"TOKEN_NEWLINE\";\n"
+          "    case TOKEN_WORD: return \"TOKEN_WORD\";\n"
+          "    case TOKEN_INTEGER: return \"TOKEN_INTEGER\";\n"
+          "    case TOKEN_FLOATING: return \"TOKEN_FLOATING\";\n",
           fn_prefix, enum_prefix);
-  fprintf(file, "  switch(token_type) {\n");
-  fprintf(file, "    case TOKEN_NEWLINE: return \"TOKEN_NEWLINE\";\n");
-  fprintf(file, "    case TOKEN_WORD: return \"TOKEN_WORD\";\n");
-  fprintf(file, "    case TOKEN_INTEGER: return \"TOKEN_INTEGER\";\n");
-  fprintf(file, "    case TOKEN_FLOATING: return \"TOKEN_FLOATING\";\n");
   OpenCloseDefArrayIterator oc_iter;
   OpenCloseDefArray_iterator(&oc_iter, &lb->strings);
   for (; OpenCloseDefArray_has_next(&oc_iter);
@@ -329,8 +330,7 @@ void write_resolve_type_(LexerBuilder *lb, FILE *file, const char fn_prefix[],
   fprintf(file, "%sLexType %ssymbol_token_type(const char word[]) {\n",
           enum_prefix, fn_prefix);
   write_switch_for_symbol_resolve_(lb->symbols_trie, 1, file);
-  fprintf(file, "  return TOKENTYPE_UNKNOWN;\n");
-  fprintf(file, "}\n\n");
+  fprintf(file, "  return TOKENTYPE_UNKNOWN;\n}\n\n");
 
   fprintf(file, "%sLexType keyword_type_(const char word[], int word_len) {\n",
           enum_prefix);
@@ -344,15 +344,14 @@ void write_resolve_type_(LexerBuilder *lb, FILE *file, const char fn_prefix[],
           fn_prefix);
   fprintf(file,
           "  if (TOKENTYPE_UNKNOWN == type) { type = keyword_type_(word, "
-          "word_len); }\n");
-  fprintf(file, "  if (TOKENTYPE_UNKNOWN != type) { return type; }\n");
-  fprintf(file,
+          "word_len); }\n"
+          "  if (TOKENTYPE_UNKNOWN != type) { return type; }\n"
           "  if (is_number(word[0])) {\n"
           "    if (ends_with(word, \"f\") || contains_char(word, '.')) {\n"
           "      return TOKEN_FLOATING;\n"
           "    } else { return TOKEN_INTEGER; }\n"
-          "  }\n");
-  fprintf(file, "  return type;\n}\n\n");
+          "  }\n"
+          "  return type;\n}\n\n");
 }
 
 void write_is_start_of_symbol_(LexerBuilder *lb, FILE *file,
@@ -371,9 +370,10 @@ void write_is_start_of_symbol_(LexerBuilder *lb, FILE *file,
       fprintf(file, "    case '%c':\n", (char)i);
     }
   }
-  fprintf(file, "      return true;\n");
-  fprintf(file, "    default: return false;\n");
-  fprintf(file, "  }\n}\n\n");
+  fprintf(file,
+          "      return true;\n"
+          "    default: return false;\n"
+          "  }\n}\n\n");
 }
 
 void write_token_type_is_string_(LexerBuilder *lb, FILE *file,
@@ -388,10 +388,11 @@ void write_token_type_is_string_(LexerBuilder *lb, FILE *file,
     OpenCloseDef_ *open_close_def = OpenCloseDefArray_mutable_value(&iter);
     fprintf(file, "    case %s:\n", open_close_def->token_name);
   }
-  fprintf(file, "      return true;\n");
-  fprintf(file, "    default:\n");
-  fprintf(file, "      return false;\n");
-  fprintf(file, "  }\n}\n\n");
+  fprintf(file,
+          "      return true;\n"
+          "    default:\n"
+          "      return false;\n"
+          "  }\n}\n\n");
 }
 
 void write_is_start_comment_(LexerBuilder *lb, FILE *file,
@@ -655,64 +656,48 @@ void lexer_builder_write_c_file(LexerBuilder *lb, FILE *file,
 void lexer_builder_write_h_file(LexerBuilder *lb, FILE *file,
                                 const char fn_prefix[],
                                 const char enum_prefix[]) {
-  fprintf(file, "#ifndef COM_GITHUB_LANGUAGE_TOOLS_LEXER_CUSTOM_LEXER_H_%s\n",
+  fprintf(file,
+          "#ifndef COM_GITHUB_LANGUAGE_TOOLS_LEXER_CUSTOM_LEXER_H_%s\n"
+          "#define COM_GITHUB_LANGUAGE_TOOLS_LEXER_CUSTOM_LEXER_H_%s\n\n"
+          "#ifdef __cplusplus\nextern \"C\" {\n#endif\n\n"
+          "#include <stdbool.h>\n\n"
+          "#include \"file-utils/file_info.h\"\n"
+          "#include \"language-tools/lexer/token.h\"\n\n",
+          fn_prefix, fn_prefix);
+  write_token_type_enum_(lb, file, enum_prefix);
+  fprintf(file, "%sLexType %ssymbol_token_type(const char word[]);\n",
+          enum_prefix, fn_prefix);
+  fprintf(file, "const char *%stoken_type_to_str(%sLexType token_type);\n",
+          fn_prefix, enum_prefix);
+  fprintf(file, "const char *%stoken_type_to_name(%sLexType token_type);\n",
+          fn_prefix, enum_prefix);
+  fprintf(file, "%sLexType %stoken_name_to_token_type(const char str[]);\n",
+          enum_prefix, fn_prefix);
+  fprintf(file, "%sLexType %sresolve_type(const char word[], int word_len);\n",
+          enum_prefix, fn_prefix);
+  fprintf(file, "bool %sis_start_of_symbol(const char word[]);\n", fn_prefix);
+  fprintf(file,
+          "bool %sis_start_of_comment(const char word[], int "
+          "*comment_open_len, "
+          "char **comment_close);\n",
           fn_prefix);
-  fprintf(
-      file, "#define COM_GITHUB_LANGUAGE_TOOLS_LEXER_CUSTOM_LEXER_H_%s\n\n",
-
-#ifdef __cplusplus
-      extern "C" {
-#endif
+  fprintf(file,
+          "bool %sis_start_of_string(const char word[], %sLexType "
+          "*string_type, "
+          "int *string_open_len, char **string_close);\n",
+          fn_prefix, enum_prefix);
+  fprintf(file, "bool %stoken_type_is_string(%sLexType type);\n", fn_prefix,
+          enum_prefix);
+  fprintf(file,
+          "void %slexer_tokenize_line(FileInfo *file, TokenArray "
+          "*tokens);\n",
           fn_prefix);
-          fprintf(file, "#include <stdbool.h>\n\n");
-          fprintf(file, "#include \"file-utils/file_info.h\"\n");
-          fprintf(file, "#include \"language-tools/lexer/token.h\"\n\n");
-          write_token_type_enum_(lb, file, enum_prefix);
-          fprintf(file, "%sLexType %ssymbol_token_type(const char word[]);\n",
-                  enum_prefix, fn_prefix);
-          fprintf(file,
-                  "const char *%stoken_type_to_str(%sLexType token_type);\n",
-                  fn_prefix, enum_prefix);
-          fprintf(file,
-                  "const char *%stoken_type_to_name(%sLexType token_type);\n",
-                  fn_prefix, enum_prefix);
-          fprintf(file,
-                  "%sLexType %stoken_name_to_token_type(const char str[]);\n",
-                  enum_prefix, fn_prefix);
-          fprintf(
-              file,
-              "%sLexType %sresolve_type(const char word[], int word_len);\n",
-              enum_prefix, fn_prefix);
-          fprintf(file, "bool %sis_start_of_symbol(const char word[]);\n",
-                  fn_prefix);
-          fprintf(file,
-                  "bool %sis_start_of_comment(const char word[], int "
-                  "*comment_open_len, "
-                  "char **comment_close);\n",
-                  fn_prefix);
-          fprintf(file,
-                  "bool %sis_start_of_string(const char word[], %sLexType "
-                  "*string_type, "
-                  "int *string_open_len, char **string_close);\n",
-                  fn_prefix, enum_prefix);
-          fprintf(file, "bool %stoken_type_is_string(%sLexType type);\n",
-                  fn_prefix, enum_prefix);
-          fprintf(file,
-                  "void %slexer_tokenize_line(FileInfo *file, TokenArray "
-                  "*tokens);\n",
-                  fn_prefix);
-          fprintf(
-              file,
-              "void %slexer_tokenize(FileInfo *file, TokenArray *tokens);\n",
-              fn_prefix);
-          fprintf(file,
-                  "\n#ifdef __cplusplus
-      }
-#endif
-
-#endif /* "
-                  "COM_GITHUB_LANGUAGE_TOOLS_LEXER_CUSTOM_LEXER_H_%s */\n",
-      fn_prefix);
+  fprintf(file, "void %slexer_tokenize(FileInfo *file, TokenArray *tokens);\n",
+          fn_prefix);
+  fprintf(file,
+          "\n#ifdef __cplusplus\n}\n#endif\n\n"
+          "#endif /* COM_GITHUB_LANGUAGE_TOOLS_LEXER_CUSTOM_LEXER_H_%s */\n",
+          fn_prefix);
 }
 
 void lexer_builder_finalize(LexerBuilder *lb) {

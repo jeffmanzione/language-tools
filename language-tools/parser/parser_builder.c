@@ -274,17 +274,20 @@ void write_and_body_(const char *production_name, const Production *p,
       print_child_function_call_(production_name_with_child_suffix_(
                                      production_name, p_child, child_index),
                                  p_child, file);
-      fprintf(file, "    if (st_child->matched) {\n");
       fprintf(file,
-              "       syntax_tree_add_child(st, st_child);\n    }\n  }\n");
+              "    if (st_child->matched) {\n"
+              "       syntax_tree_add_child(st, st_child);"
+              "    }\n  }\n");
     } else {
       print_child_function_call_(production_name_with_child_suffix_(
                                      production_name, p_child, child_index),
                                  p_child, file);
-      fprintf(file, "    if (!st_child->matched) {\n");
-      fprintf(file, "      parser_delete_st(parser, st);\n");
-      fprintf(file, "      return &NO_MATCH;\n    }\n");
-      fprintf(file, "    syntax_tree_add_child(st, st_child);\n  }\n");
+      fprintf(file,
+              "    if (!st_child->matched) {\n"
+              "      parser_delete_st(parser, st);\n"
+              "      return &NO_MATCH;"
+              "    }\n"
+              "    syntax_tree_add_child(st, st_child);\n  }\n");
     }
   }
   fprintf(file, "  if (!st->has_children) {\n");
@@ -306,13 +309,15 @@ void write_or_body_(const char *production_name, const Production *p,
     print_child_function_call_(production_name_with_child_suffix_(
                                    production_name, p_child, child_index),
                                p_child, file);
-    fprintf(file, "    if (st_child->matched) {\n");
-    fprintf(file, "      if (NULL == st_child->rule_fn) {\n");
+    fprintf(file,
+            "    if (st_child->matched) {\n"
+            "      if (NULL == st_child->rule_fn) {\n");
     fprintf(file, "        st_child->rule_fn = rule_%s;\n", production_name);
     fprintf(file, "        st_child->production_name = \"%s\";\n",
             production_name);
-    fprintf(file, "      }\n");
-    fprintf(file, "      return st_child;\n    }\n  }\n");
+    fprintf(file,
+            "      }\n"
+            "      return st_child;\n    }\n  }\n");
   }
   fprintf(file, "  return &NO_MATCH;\n");
 }
@@ -349,9 +354,11 @@ void write_rule_and_subrules_(const char *production_name, const Production *p,
   } else if (PRODUCTION_OR == p->type) {
     write_or_body_(production_name, p, file);
   } else if (PRODUCTION_TOKEN == p->type) {
-    fprintf(file, "  Token *token = parser_next(parser);\n");
-    fprintf(file, "  if (NULL == token || %s != token->type) {\n", p->token);
-    fprintf(file, "    return &NO_MATCH;\n  }\n");
+    fprintf(file,
+            "  Token *token = parser_next(parser);\n"
+            "  if (NULL == token || %s != token->type) {\n"
+            "    return &NO_MATCH;\n  }\n",
+            p->token);
     if (0 == strncmp("__token",
                      production_name + strlen(production_name) -
                          strlen("__token") - 1,
@@ -375,10 +382,11 @@ void write_rule_and_subrules_(const char *production_name, const Production *p,
 void write_includes_(ParserBuilder *pb, FILE *file, const char h_file_path[],
                      const char lexer_h_file_path[]) {
   // Includes.
-  fprintf(file, "#include \"%s\"\n\n", h_file_path);
-  fprintf(file, "#include \"language-tools/lexer/token.h\"\n");
-  fprintf(file, "#include \"%s\"\n", lexer_h_file_path);
-  fprintf(file, "\n");
+  fprintf(file,
+          "#include \"%s\"\n\n"
+          "#include \"language-tools/lexer/token.h\"\n"
+          "#include \"%s\"\n\n",
+          h_file_path, lexer_h_file_path);
 }
 
 void parser_builder_write_declare_functions_(ParserBuilder *pb, FILE *file) {
@@ -415,25 +423,15 @@ void parser_builder_write_c_file(ParserBuilder *pb, const char h_file_path[],
 void parser_builder_write_h_file(ParserBuilder *pb, FILE *file) {
   fprintf(
       file,
-      "#ifndef COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_PARSER_TODO_THIS_H_\n");
-  fprintf(
-      file,
-      "#define COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_PARSER_TODO_THIS_H_\n\n");
-
-#ifdef __cplusplus
-  extern "C" {
-#endif
-  fprintf(file, "#include \"language-tools/parser/parser.h\"\n");
-  fprintf(file, "\n");
+      "#ifndef COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_PARSER_TODO_THIS_H_\n"
+      "#define COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_PARSER_TODO_THIS_H_\n\n"
+      "#ifdef __cplusplus\nextern \"C\" {\n#endif\n\n"
+      "#include \"language-tools/parser/parser.h\"\n\n");
 
   parser_builder_write_declare_functions_(pb, file);
 
   fprintf(file,
-          "\n#ifdef __cplusplus
-  }
-#endif
-
-#endif /* "
+          "\n#ifdef __cplusplus\n}\n#endif\n\n#endif /* "
           "COM_GITHUB_JEFFMANZIONE_LANGUAGE_TOOLS_PARSER_TODO_THIS_H_ */\n");
 }
 
