@@ -9,18 +9,18 @@ package(
 
 lexer_builder(
     name = "lisp_lexer",
-    comments = "comments.txt",
+    comments = "config/comments.txt",
     enum_prefix = "Lisp",
     fn_prefix = "lisp_",
-    keywords = "keywords.txt",
-    strings = "strings.txt",
-    symbols = "symbols.txt",
+    keywords = "config/keywords.txt",
+    strings = "config/strings.txt",
+    symbols = "config/symbols.txt",
 )
 
 parser_builder(
     name = "lisp_parser",
     lexer = ":lisp_lexer",
-    rules = "rules.txt",
+    rules = "config/rules.txt",
 )
 
 cc_library(
