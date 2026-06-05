@@ -107,9 +107,9 @@ def lexer_builder(
         hdrs = [":%s_h" % name],
         srcs = [":%s_c" % name],
         deps = [
-            "//language-tools/lexer:lexer_helper",
-            "//language-tools/lexer:token",
-            "@jeffmanzione_file_utils//file-utils:string_utils",
-            "@jeffmanzione_file_utils//file-utils:file_info",
+            Label("//language-tools/lexer:lexer_helper"),
+            Label("//language-tools/lexer:token"),
+            Label("@jeffmanzione_file_utils//file-utils:string_utils"),
+            Label("@jeffmanzione_file_utils//file-utils:file_info"),
         ],
     )
