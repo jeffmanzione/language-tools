@@ -2,7 +2,7 @@
 
 module(
     name = "jeffmanzione_language_tools",
-    version = "1.0.0",
+    version = "1.0.1",
 )
 
 bazel_dep(name = "jeffmanzione_c_data_structures", version = "1.0.3")
