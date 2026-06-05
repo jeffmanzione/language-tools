@@ -64,6 +64,7 @@ def parser_builder(name, rules, lexer):
         srcs = [":%s_c" % name],
         deps = [
             lexer,
-            "//language-tools/parser",
+        ] + [
+            Label("//language-tools/parser"),
         ],
     )
