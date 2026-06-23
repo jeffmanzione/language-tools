@@ -1,6 +1,6 @@
 PROJECT="jeffmanzione_language_tools"
-TAG="v0.0.x"
-VERSION="0.0.0"
+TAG="v1.0.x"
+VERSION="1.0.2"
 
 git archive \
     --format=zip \
