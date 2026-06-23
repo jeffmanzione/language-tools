@@ -84,7 +84,7 @@ int32_t SAMap_ptr_comparator(const void *ptr1, uint32_t ptr1_len,
   void Delete_##name##_inner(Expression_##name *name, analyzer_input)
 
 #define REGISTRATION_FN(name) \
-  void name(Map *populators, Map *producers, Map *deleters)
+  void name(SAMap *populators, SAMap *producers, SAMap *deleters)
 
 #define REGISTER_EXPRESSION(name)                                              \
   {                                                                            \
@@ -95,7 +95,7 @@ int32_t SAMap_ptr_comparator(const void *ptr1, uint32_t ptr1_len,
 #define REGISTER_EXPRESSION_WITH_PRODUCER(name)                                \
   {                                                                            \
     SAMap_insert(populators, rule_##name, sizeof(Populator), Populate_##name); \
-    SAMap_insert(producers, rule_##name, sizeof(Producers), Produce_##name);   \
+    SAMap_insert(producers, rule_##name, sizeof(void *), Produce_##name);      \
     SAMap_insert(deleters, rule_##name, sizeof(EDeleter), Delete_##name);      \
   }
 
