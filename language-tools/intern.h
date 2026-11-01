@@ -9,8 +9,8 @@ extern "C" {
 
 DEFINE_INTERN_POOL(GlobalStringInternPool, char);
 
-void global_string_intern_pool_init();
-void global_string_intern_pool_finalize();
+void global_string_intern_pool_init(void);
+void global_string_intern_pool_finalize(void);
 
 const char *global_intern(const char text[]);
 const char *global_intern_range(const char text[], int start, int len);

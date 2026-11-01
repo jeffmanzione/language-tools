@@ -10,7 +10,7 @@
 IMPL_ARRAYLIKE(TokenDefArray, TokenDef_);
 IMPL_ARRAYLIKE(OpenCloseDefArray, OpenCloseDef_);
 
-Trie_ *trie_create_() {
+Trie_ *trie_create_(void) {
   Trie_ *trie = calloc(1, sizeof(Trie_));
   return trie;
 }

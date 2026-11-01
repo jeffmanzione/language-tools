@@ -12,7 +12,7 @@ typedef struct Production_ Production;
 typedef const char *(*TokenToStringFn)(int);
 typedef int (*StringToTokenFn)(const char *);
 
-ParserBuilder *parser_builder_create();
+ParserBuilder *parser_builder_create(void);
 void parser_builder_delete(ParserBuilder *pb);
 void parser_builder_write_c_file(ParserBuilder *pb, const char h_file_path[],
                                  const char lexer_h_file_path[], FILE *file);
@@ -55,13 +55,13 @@ Production *and__(int arg_count, ...);
 
 Production *rule(const char rule_name[]);
 Production *token(const char token[]);
-Production *newline();
+Production *newline(void);
 Production *optional(Production *p_child);
 Production *line(Production *p);
-Production *epsilon();
+Production *epsilon(void);
 
-Production *production_and();
-Production *production_or();
+Production *production_and(void);
+Production *production_or(void);
 void production_add_child(Production *parent, Production *child);
 void production_exclude_from_header(Production *p);
 

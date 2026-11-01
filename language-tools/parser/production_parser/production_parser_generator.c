@@ -2,7 +2,7 @@
 #include "language-tools/parser/parser_builder.h"
 #include "language-tools/parser/production_lexer/production_lexer.h"
 
-ParserBuilder *create_parser_builder_() {
+ParserBuilder *create_parser_builder_(void) {
   ParserBuilder *pb = parser_builder_create();
 
   parser_builder_rule(pb, "epsilon", token("KEYWORD_EPSILON"));

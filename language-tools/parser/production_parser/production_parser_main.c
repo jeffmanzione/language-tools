@@ -131,9 +131,7 @@ int main(int argc, const char *argv[]) {
 
   ExpressionTree *etree = semantic_analyzer_populate(&analyzer, productions);
 
-  ParserBuilder *pb =
-      parser_builder_create((TokenToStringFn)token_type_to_name,
-                            (StringToTokenFn)token_name_to_token_type);
+  ParserBuilder *pb = parser_builder_create();
 
   produce_parser_builder_(pb, etree);
 
