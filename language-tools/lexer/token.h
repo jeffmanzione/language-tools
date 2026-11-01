@@ -23,7 +23,7 @@ Token *token_create(int type, int line, int col, const char text[],
 void token_fill(Token *tok, int type, int line, int col, const char text[],
                 int text_len);
 void token_delete(Token *tok);
-void token_finalize_all();
+void token_finalize_all(void);
 
 #ifdef __cplusplus
 }

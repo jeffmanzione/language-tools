@@ -73,11 +73,13 @@ Production *production_multi_helper_(ProductionType type) {
   return p;
 }
 
-Production *production_and() {
+Production *production_and(void) {
   return production_multi_helper_(PRODUCTION_AND);
 }
 
-Production *production_or() { return production_multi_helper_(PRODUCTION_OR); }
+Production *production_or(void) {
+  return production_multi_helper_(PRODUCTION_OR);
+}
 
 void production_add_child(Production *parent, Production *child) {
   ProductionArray_push_back(&parent->children, child);
@@ -124,7 +126,7 @@ Production *optional(Production *p_child) {
   return p;
 }
 
-Production *newline() { return token("TOKEN_NEWLINE"); }
+Production *newline(void) { return token("TOKEN_NEWLINE"); }
 
 Production *line(Production *p) {
   Production *p_parent = production_multi_(PRODUCTION_AND, 0, NULL);
@@ -134,7 +136,7 @@ Production *line(Production *p) {
   return p_parent;
 }
 
-Production *epsilon() { return production_create_(PRODUCTION_EPSILON); }
+Production *epsilon(void) { return production_create_(PRODUCTION_EPSILON); }
 
 Production *rule(const char rule_name[]) {
   Production *p = production_create_(PRODUCTION_RULE);
@@ -172,7 +174,7 @@ void production_print_(const Production *p, FILE *out) {
   fprintf(out, ")");
 }
 
-ParserBuilder *parser_builder_create() {
+ParserBuilder *parser_builder_create(void) {
   ParserBuilder *pb = malloc(sizeof(ParserBuilder));
   ProductionMap_init(&pb->rules, string_ptr_hasher_, string_ptr_comparator_);
   return pb;

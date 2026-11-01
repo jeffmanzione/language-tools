@@ -37,12 +37,12 @@ int32_t compare_strings_(const char *ptr1, uint32_t size1, const char *ptr2,
   return memcmp(ptr1, ptr2, size1 > size2 ? size1 : size2);
 }
 
-void global_string_intern_pool_init() {
+void global_string_intern_pool_init(void) {
   GlobalStringInternPool_init(&global_intern_pool_, /*threadsafe=*/false,
                               hash_string_, compare_strings_);
 }
 
-void global_string_intern_pool_finalize() {
+void global_string_intern_pool_finalize(void) {
   GlobalStringInternPool_finalize(&global_intern_pool_);
 }
 

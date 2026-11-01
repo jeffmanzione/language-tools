@@ -33,7 +33,7 @@ Token *token_create(int type, int line, int col, const char text[],
 
 void token_delete(Token *token) { arena_free(&token_arena_, token); }
 
-void token_finalize_all() {
+void token_finalize_all(void) {
   if (!inited) {
     return;
   }
