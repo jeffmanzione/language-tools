@@ -546,7 +546,16 @@ bool lexer_tokenize_line_(FileInfo *fi, TokenArray *tokens, bool *in_comment, bo
         eos = find_str(eos + 1,\n\
                        strlen(line) - (eos - line + 1), *string_end, \n\
                        strlen(*string_end)); \n\
-        if (NULL == eos ||  *(eos - 1) != '\\\\') {\n\
+        if (NULL == eos) {\n\
+          break;\n\
+        }\n\
+        // The closer is escaped only by an odd number of backslashes.\n\
+        int num_backslashes = 0;\n\
+        while (eos - num_backslashes > line + col_num &&\n\
+               *(eos - num_backslashes - 1) == '\\\\') {\n\
+          ++num_backslashes;\n\
+        }\n\
+        if (0 == num_backslashes %% 2) {\n\
           break;\n\
         }\n\
       }\n\

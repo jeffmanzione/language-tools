@@ -65,6 +65,7 @@ static bool should_escape_(char c) {
     case '\"':
     case '\n':
     case '\r':
+    case '\t':
     case '\\':
       return true;
     default:
